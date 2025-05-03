@@ -7,3 +7,9 @@
 [0503/210619.562:ERROR:viz_main_impl.cc(162)] Exiting GPU process due to errors during initialization
 [0503/210619.799:ERROR:viz_main_impl.cc(162)] Exiting GPU process due to errors during initialization
 [0503/210620.037:ERROR:gpu_init.cc(441)] Passthrough is not supported, GL is disabled
+[0503/213254.615:INFO:CONSOLE(4)] "Uncaught ReferenceError: openCity is not defined", source: file:///C:/Users/ntheo/Documents/Website/NathanTheophile.github.io/index.html (4)
+[0503/213254.910:INFO:CONSOLE(5)] "Uncaught ReferenceError: openCity is not defined", source: file:///C:/Users/ntheo/Documents/Website/NathanTheophile.github.io/index.html (5)
+[0503/213323.493:INFO:CONSOLE(3)] "Uncaught ReferenceError: openCity is not defined", source: file:///C:/Users/ntheo/Documents/Website/NathanTheophile.github.io/index.html (3)
+[0503/213327.764:INFO:CONSOLE(4)] "Uncaught ReferenceError: openCity is not defined", source: file:///C:/Users/ntheo/Documents/Website/NathanTheophile.github.io/index.html (4)
+[0503/213327.997:INFO:CONSOLE(5)] "Uncaught ReferenceError: openCity is not defined", source: file:///C:/Users/ntheo/Documents/Website/NathanTheophile.github.io/index.html (5)
+[0503/213328.236:INFO:CONSOLE(3)] "Uncaught ReferenceError: openCity is not defined", source: file:///C:/Users/ntheo/Documents/Website/NathanTheophile.github.io/index.html (3)
