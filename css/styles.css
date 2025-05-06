@@ -1,0 +1,17 @@
+h1 {
+    color: blue;
+    font-family: 'Century Gothic';
+    font-size: 300%;
+}
+p {
+    color: red;
+    font-size: 160%;
+    border: 2px solid powderblue;
+}
+img {
+    border-radius:10px 10px;
+}
+.test {
+    background-image: linear-gradient(135deg, #ffd800, #ff6a00);
+    height: 100vh;
+}
