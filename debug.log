@@ -16,3 +16,6 @@
 [0506/184850.086:ERROR:viz_main_impl.cc(162)] Exiting GPU process due to errors during initialization
 [0506/184850.306:ERROR:viz_main_impl.cc(162)] Exiting GPU process due to errors during initialization
 [0506/184850.480:ERROR:gpu_init.cc(441)] Passthrough is not supported, GL is disabled
+[0506/201820.966:ERROR:viz_main_impl.cc(162)] Exiting GPU process due to errors during initialization
+[0506/201821.154:ERROR:viz_main_impl.cc(162)] Exiting GPU process due to errors during initialization
+[0506/201821.324:ERROR:gpu_init.cc(441)] Passthrough is not supported, GL is disabled
