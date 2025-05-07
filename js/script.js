@@ -1,25 +1,27 @@
 const canvas = document.getElementById('linesCanvas');
 const ctx = canvas.getContext('2d');
 
+// Paramètres
 let width, height;
+
+const numLines = 80;
+let lines = [];
+
 function resize() {
-  width = canvas.width = window.innerWidth;
-  height = canvas.height = window.innerHeight;
+    width = canvas.width = window.innerWidth;
+    height = canvas.height = window.innerHeight;
+
+    for (let i = 0; i < numLines; i++) {
+      lines.push({
+        x: (i / numLines) * width,
+        offset: Math.random() * 1000,
+        pulse: Math.random() < 0.1 ? 0 : null
+      });
+    }
 }
+
 window.addEventListener('resize', resize);
 resize();
-
-// Paramètres
-const numLines = 80;
-const lines = [];
-
-for (let i = 0; i < numLines; i++) {
-  lines.push({
-    x: (i / numLines) * width,
-    offset: Math.random() * 1000,
-    pulse: Math.random() < 0.1 ? 0 : null
-  });
-}
 
 function draw() {
   ctx.clearRect(0, 0, width, height);
