@@ -15,5 +15,6 @@ const CONFIG =
     pulseHeight: 50,             // hauteur visible de l’impulsion
     pulseDuration: 6,            // durée (en frames) d’une impulsion
     offsetSpeed: 0.5,            // vitesse d’ondulation
-  };
-  
+};
+
+export { CONFIG };
