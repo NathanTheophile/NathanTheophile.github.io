@@ -1,4 +1,6 @@
 import { CONFIG } from './config.js';
+console.log("CONFIG loaded", CONFIG);
+
 
 const canvas = document.getElementById('linesCanvas');
 const ctx = canvas.getContext('2d');
