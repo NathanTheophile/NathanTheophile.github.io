@@ -1,50 +1,18 @@
-<!-- ALL THIS REPO IS OVER COMMENTED FOR PERSONNAL LEARNING -->
-
-<!-- Defines that this document is an HTML5 document -->
 <!DOCTYPE html>
-
-<html lang="fr">
-
-<!-- Metadata and links -->
-<head>
-    <!-- CSS file link -->
-    <link rel="stylesheet" href="css/styles.css">
-
-    <!-- Responsiveness -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <meta charset="UTF-8">
-
-    <!-- Browser bar tab title -->
-    <title>Page Title</title>
+<html lang="en">
+<head  <meta charset="UTF-8">
+  <title>WebGL Water Base</title>
+  <style>
+    body { margin: 0; overflow: hidden; background: #000; }
+    canvas { width: 100vw; height: 100vh; display: block; }
+  </style>
 </head>
-
 <body>
-    <div class="background"> <!-- contient le fond animé + les lignes décoratives -->
-        <canvas id="linesCanvas"></canvas> <!-- pour dessiner les lignes si on part sur du canvas -->
-      </div>
-    
-      <main>
-        <h1>Nathan Développeur Gameplay</h1>
-        <p>Créateur de mondes interactifs</p>
-        <div class="icons">
-          <a href="#"><img src="github.svg" alt="GitHub"></a>
-          <a href="#"><img src="linkedin.svg" alt="LinkedIn"></a>
-          <!-- autres pictos éventuels -->
-        </div>
-      </main>
+  <script src="./js/lightgl.js"></script>
+  <script src="./js/renderer.js"></script>
+  <script src="./js/water.js"></script>
+  <script src="./js/main.js"></script>
+"></script>
 
-    <!-- CARD -->
-    <!--
-    <div class="card">
-        <h1>Animate Border</h1>
-        <br>
-        <p>Lorem Ipsum test orem Ipsum testorem Ipsum testorem Ipsum testorem Ipsum testorem Ipsum testorem Ipsum test</p>
-    </div>
-    -->
-    
-    <!-- JS file link -->
-    <script type="module" src="js/script.js"></script>
 </body>
-
 </html>
