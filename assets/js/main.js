@@ -1,87 +1,113 @@
-const navLinks = document.querySelectorAll('.nav-links a');
-const pages = document.querySelectorAll('.page');
-let isTransitioning = false;
+const navLinks = Array.from(document.querySelectorAll('.nav-links a'));
+const pages = Array.from(document.querySelectorAll('.page'));
+const pageContainer = document.querySelector('.page-container');
 
-const transitionMap = {
-  'skills:projects': 'right',
-  'skills:contact': 'left',
-  'projects:skills': 'left',
-  'projects:contact': 'left',
-  'contact:skills': 'right',
-  'contact:projects': 'right',
+const pageOrder = navLinks.map((link) => link.dataset.page).filter(Boolean);
+const pageMap = new Map(pages.map((page) => [page.dataset.page, page]));
+
+let activePage = document.querySelector('.page.is-active')?.dataset.page || pageOrder[0];
+let viewportWidth = window.innerWidth;
+
+const setViewportWidth = () => {
+  viewportWidth = window.innerWidth;
 };
 
-const setHiddenPosition = (page, direction) => {
-  page.classList.remove('is-hidden-left', 'is-hidden-right');
-  if (direction === 'left') {
-    page.classList.add('is-hidden-left');
-  } else {
-    page.classList.add('is-hidden-right');
-  }
-};
+const setPagePositions = (targetPage = activePage, offsetX = 0) => {
+  const targetIndex = pageOrder.indexOf(targetPage);
 
-const setActiveLink = (targetPage) => {
+  pages.forEach((page) => {
+    const pageIndex = pageOrder.indexOf(page.dataset.page);
+    const baseOffset = (pageIndex - targetIndex) * viewportWidth;
+    page.style.transform = `translateX(${baseOffset + offsetX}px)`;
+    page.classList.toggle('is-active', page.dataset.page === targetPage);
+  });
+
   navLinks.forEach((link) => {
     link.classList.toggle('active', link.dataset.page === targetPage);
   });
 };
 
-const initializePages = () => {
-  pages.forEach((page) => {
-    if (page.classList.contains('is-active')) {
-      page.classList.remove('is-hidden-left', 'is-hidden-right');
-      return;
-    }
-    page.classList.remove('is-active');
-    page.classList.add('is-hidden-right');
-  });
+const updateActivePage = (nextPage) => {
+  if (!nextPage || nextPage === activePage) {
+    setPagePositions(activePage, 0);
+    return;
+  }
+  activePage = nextPage;
+  setPagePositions(activePage, 0);
 };
 
-const switchPage = (targetPage) => {
-  if (isTransitioning) return;
-  const currentPage = document.querySelector('.page.is-active');
-  if (!currentPage) return;
-  const currentKey = currentPage.dataset.page;
-  if (currentKey === targetPage) return;
-
-  const nextPage = document.querySelector(`.page[data-page="${targetPage}"]`);
-  if (!nextPage) return;
-
-  const direction = transitionMap[`${currentKey}:${targetPage}`] || 'right';
-  const outgoingDirection = direction === 'right' ? 'right' : 'left';
-  const incomingStart = direction === 'right' ? 'left' : 'right';
-
-  isTransitioning = true;
-
-  setHiddenPosition(nextPage, incomingStart);
-  nextPage.classList.remove('is-active');
-
-  requestAnimationFrame(() => {
-    currentPage.classList.remove('is-active');
-    setHiddenPosition(currentPage, outgoingDirection);
-
-    nextPage.classList.add('is-active');
-    nextPage.classList.remove('is-hidden-left', 'is-hidden-right');
-
-    setActiveLink(targetPage);
-
-    const onTransitionEnd = (event) => {
-      if (event.target !== nextPage) return;
-      nextPage.removeEventListener('transitionend', onTransitionEnd);
-      isTransitioning = false;
-    };
-
-    nextPage.addEventListener('transitionend', onTransitionEnd);
-  });
+const getAdjacentPage = (direction) => {
+  const currentIndex = pageOrder.indexOf(activePage);
+  const nextIndex = currentIndex + direction;
+  return pageOrder[nextIndex];
 };
-
-initializePages();
 
 navLinks.forEach((link) => {
   link.addEventListener('click', (event) => {
     event.preventDefault();
-    const targetPage = link.dataset.page;
-    if (!targetPage) return;
-    switchPage(targetPage);
+    updateActivePage(link.dataset.page);
   });
 });
+
+let isDragging = false;
+let dragStarted = false;
+let startX = 0;
+let startY = 0;
+
+pageContainer.addEventListener('pointerdown', (event) => {
+  if (event.button !== 0) return;
+
+  isDragging = true;
+  dragStarted = false;
+  startX = event.clientX;
+  startY = event.clientY;
+  pageContainer.setPointerCapture(event.pointerId);
+});
+
+pageContainer.addEventListener('pointermove', (event) => {
+  if (!isDragging) return;
+
+  const deltaX = event.clientX - startX;
+  const deltaY = event.clientY - startY;
+
+  if (!dragStarted) {
+    if (Math.abs(deltaX) < 8 || Math.abs(deltaX) < Math.abs(deltaY)) {
+      return;
+    }
+    dragStarted = true;
+    pageContainer.classList.add('is-dragging');
+  }
+
+  event.preventDefault();
+  setPagePositions(activePage, deltaX);
+});
+
+const endDrag = (event) => {
+  if (!isDragging) return;
+
+  const deltaX = event.clientX - startX;
+  const threshold = Math.min(140, viewportWidth * 0.2);
+
+  pageContainer.classList.remove('is-dragging');
+
+  if (dragStarted && Math.abs(deltaX) > threshold) {
+    const direction = deltaX > 0 ? -1 : 1;
+    updateActivePage(getAdjacentPage(direction));
+  } else {
+    setPagePositions(activePage, 0);
+  }
+
+  isDragging = false;
+  dragStarted = false;
+};
+
+pageContainer.addEventListener('pointerup', endDrag);
+pageContainer.addEventListener('pointercancel', endDrag);
+
+window.addEventListener('resize', () => {
+  setViewportWidth();
+  setPagePositions(activePage, 0);
+});
+
+setViewportWidth();
+setPagePositions(activePage, 0);
