@@ -34,8 +34,12 @@ html {
 }
 
 body {
-  background: #041018 url("../img/bg.svg") bottom/100% 100% no-repeat;
-  color: #c9a84c;
+  min-height: 100vh;
+  background-color: #041018;
+  background-image: url("../img/bg.svg");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: cover;  color: #c9a84c;
   font-family: "Cake Mono", monospace;
 }
 
@@ -56,12 +60,22 @@ body {
 
 .nav-links {
   display: flex;
-  gap: 2rem;
+  gap: 8rem;
   list-style: none;
 }
 
+.nav-links a {
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 40px;
+}
+
+.nav-links a.active {
+  color: var(--accent);
+}
+
 .logo {
-  height: 64px;
+  height: 60px;
 }
 
 .lang-switch {
@@ -71,7 +85,7 @@ body {
 }
 
 .lang-switch img {
-  width: 40px;
+  height: 30px;
 }
 
 /* Sections */
