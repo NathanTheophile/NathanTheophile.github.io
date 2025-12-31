@@ -4,6 +4,8 @@ const pageContainer = document.querySelector('.page-container');
 const siteHeader = document.querySelector('.site-header');
 const skillsScroll = document.querySelector('.skills-scroll');
 const leafLayer = document.querySelector('.leaf-fall-layer');
+const skillsIntro = document.querySelector('.skills-panel--intro');
+const skillsIntroImage = skillsIntro?.querySelector('img');
 const trailCanvas = document.querySelector('.mouse-trail');
 const trailContext = trailCanvas?.getContext('2d');
 
@@ -162,6 +164,8 @@ function buildLeafKeyframes(maxDrop, maxSway, startRotation) {
   const easeOutCirc = 'cubic-bezier(0.37, 0, 0.63, 1)';
   const drift = randomBetween(-maxSway * 0.3, maxSway * 0.3);
   const directionStart = Math.random() < 0.5 ? -1 : 1;
+  const maxOpacity = 0.8;
+  const minOpacity = 0.1;
 
   for (let step = 0; step <= steps; step += 1) {
     const progress = step / steps;
@@ -170,10 +174,11 @@ function buildLeafKeyframes(maxDrop, maxSway, startRotation) {
     const swingMagnitude = maxSway * (0.35 + progress * 0.65);
     const currentX = swingDirection * swingMagnitude + drift * progress;
     const currentRotation = step === 0 ? startRotation : swingDirection * -45;
+    const opacity = minOpacity + (maxOpacity - minOpacity) * (1 - progress);
 
     keyframes.push({
       transform: `translate(${currentX.toFixed(2)}px, ${drop.toFixed(2)}px) rotate(${currentRotation.toFixed(2)}deg)`,
-      opacity: Number((0.65 * (1 - progress)).toFixed(2)),
+      opacity: Number(opacity.toFixed(2)),
       easing: easeOutCirc,
     });
   }
@@ -184,8 +189,30 @@ function buildLeafKeyframes(maxDrop, maxSway, startRotation) {
 function createFallingLeaf() {
   if (!leafLayer || prefersReducedMotion.matches) return;
 
-  const rect = leafLayer.getBoundingClientRect();
-  if (!rect.width || !rect.height) return;
+  const layerRect = leafLayer.getBoundingClientRect();
+  if (!layerRect.width || !layerRect.height) return;
+
+  const treeRect = skillsIntroImage?.getBoundingClientRect();
+  const spawnBounds = treeRect && treeRect.width && treeRect.height
+    ? {
+        left: Math.max(treeRect.left, layerRect.left),
+        right: Math.min(treeRect.right, layerRect.right),
+        top: Math.max(treeRect.top, layerRect.top),
+        bottom: Math.min(treeRect.bottom, layerRect.bottom),
+      }
+    : {
+        left: layerRect.left,
+        right: layerRect.right,
+        top: layerRect.top,
+        bottom: layerRect.bottom,
+      };
+
+  const spawnWidth = Math.max(0, spawnBounds.right - spawnBounds.left);
+  const spawnHeight = Math.max(0, spawnBounds.bottom - spawnBounds.top);
+  const safeSpawnWidth = spawnWidth || layerRect.width;
+  const safeSpawnHeight = spawnHeight || layerRect.height;
+  const spawnOffsetX = (spawnBounds.left ?? layerRect.left) - layerRect.left;
+  const spawnOffsetY = (spawnBounds.top ?? layerRect.top) - layerRect.top;
 
   const leaf = document.createElement('img');
   leaf.src = 'assets/img/tree/leave.svg';
@@ -195,13 +222,14 @@ function createFallingLeaf() {
   leaf.style.width = `${size}px`;
   leaf.style.height = 'auto';
 
-  const startX = randomBetween(rect.width * 0.15, rect.width * 0.85);
-  const startY = randomBetween(rect.height * 0.05, rect.height * 0.4);
+  const startX = randomBetween(safeSpawnWidth * 0.15, safeSpawnWidth * 0.85) + spawnOffsetX;
+  const startY = randomBetween(safeSpawnHeight * 0.05, safeSpawnHeight * 0.4) + spawnOffsetY;
   leaf.style.left = `${startX}px`;
   leaf.style.top = `${startY}px`;
 
-  const maxDrop = rect.height * randomBetween(0.5, 0.85);
-  const maxSway = rect.width * randomBetween(0.05, 0.12);
+  const availableDrop = Math.max(layerRect.height - startY, layerRect.height * 0.35);
+  const maxDrop = availableDrop * randomBetween(0.6, 0.95);
+  const maxSway = safeSpawnWidth * randomBetween(0.05, 0.12);
   const startRotation = randomBetween(-30, 30);
 
   const animation = leaf.animate(buildLeafKeyframes(maxDrop, maxSway, startRotation), {
