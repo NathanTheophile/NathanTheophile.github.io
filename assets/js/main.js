@@ -1,6 +1,8 @@
 const navLinks = Array.from(document.querySelectorAll('.nav-links a'));
 const pages = Array.from(document.querySelectorAll('.page'));
 const pageContainer = document.querySelector('.page-container');
+const siteHeader = document.querySelector('.site-header');
+const skillsScroll = document.querySelector('.skills-scroll');
 
 const pageOrder = navLinks.map((link) => link.dataset.page).filter(Boolean);
 const pageMap = new Map(pages.map((page) => [page.dataset.page, page]));
@@ -10,6 +12,18 @@ let viewportWidth = window.innerWidth;
 
 const setViewportWidth = () => {
   viewportWidth = window.innerWidth;
+};
+
+const updateHeaderVisibility = () => {
+  if (!siteHeader) return;
+
+  if (activePage !== 'skills') {
+    siteHeader.classList.remove('is-hidden');
+    return;
+  }
+
+  if (!skillsScroll) return;
+  siteHeader.classList.toggle('is-hidden', skillsScroll.scrollTop > 0);
 };
 
 const setPagePositions = (targetPage = activePage, offsetX = 0) => {
@@ -30,10 +44,12 @@ const setPagePositions = (targetPage = activePage, offsetX = 0) => {
 const updateActivePage = (nextPage) => {
   if (!nextPage || nextPage === activePage) {
     setPagePositions(activePage, 0);
+    updateHeaderVisibility();
     return;
   }
   activePage = nextPage;
   setPagePositions(activePage, 0);
+  updateHeaderVisibility();
 };
 
 const getAdjacentPage = (direction) => {
@@ -109,5 +125,13 @@ window.addEventListener('resize', () => {
   setPagePositions(activePage, 0);
 });
 
+if (skillsScroll) {
+  skillsScroll.addEventListener('scroll', () => {
+    if (activePage !== 'skills') return;
+    updateHeaderVisibility();
+  }, { passive: true });
+}
+
 setViewportWidth();
 setPagePositions(activePage, 0);
+updateHeaderVisibility();
