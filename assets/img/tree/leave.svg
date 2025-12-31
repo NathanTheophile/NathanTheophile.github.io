@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Base" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 35.14 17.51">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: url(#DÃ©gradÃ©_sans_nom_96);
+      }
+    </style>
+    <linearGradient id="DÃ©gradÃ©_sans_nom_96" data-name="DÃ©gradÃ© sans nom 96" x1="17.57" y1="-294.36" x2="17.57" y2="131.12" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#70623e" stop-opacity=".1"/>
+      <stop offset="1" stop-color="#a89d8a"/>
+    </linearGradient>
+  </defs>
+  <path class="cls-1" d="M0,0c13.66.8,21.55,5.38,35.14,6.57-1.86,8.81-12.45,12.6-20.36,10.26C6.92,14.68.53,8.28,0,0h0Z"/>
+</svg>

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Mode_Isolation" data-name="Mode Isolation" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 39.82 28.76">
+  <defs>
+    <style>
+      .cls-1 {
+        opacity: .9;
+      }
+
+      .cls-2 {
+        fill: #eee;
+      }
+
+      .cls-3 {
+        fill: #002495;
+      }
+
+      .cls-4 {
+        fill: #ed2939;
+      }
+    </style>
+  </defs>
+  <g class="cls-1">
+    <path class="cls-4" d="M39.82,24.34c0,2.44-1.98,4.42-4.42,4.42h-8.85V0h8.85c2.44,0,4.42,1.98,4.42,4.42v19.91Z"/>
+    <path class="cls-3" d="M4.42,0C1.98,0,0,1.98,0,4.42v19.91c0,2.44,1.98,4.42,4.42,4.42h8.85V0H4.42Z"/>
+    <path class="cls-2" d="M13.27,0h13.27v28.76h-13.27V0Z"/>
+  </g>
+</svg>

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Mode_Isolation" data-name="Mode Isolation" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 3 1080">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: none;
+        stroke: url(#DÃ©gradÃ©_sans_nom_46);
+        stroke-miterlimit: 10;
+        stroke-opacity: .35;
+        stroke-width: 3px;
+      }
+    </style>
+    <linearGradient id="DÃ©gradÃ©_sans_nom_46" data-name="DÃ©gradÃ© sans nom 46" x1="1.5" y1="0" x2="1.5" y2="1080" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fff" stop-opacity="0"/>
+      <stop offset="1" stop-color="#fff"/>
+    </linearGradient>
+  </defs>
+  <line id="Spacer_Right" class="cls-1" x1="1.5" y1="1080" x2="1.5"/>
+</svg>

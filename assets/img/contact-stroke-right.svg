@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Base" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1609.7 154.81">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: none;
+        stroke: #a89d8a;
+        stroke-miterlimit: 10;
+        stroke-width: 3px;
+      }
+    </style>
+  </defs>
+  <path class="cls-1" d="M1.36,154.17S81.64-15.83,267.64,74.17,868.64-72.83,1165.64,26.17s444,93,444,93"/>
+</svg>

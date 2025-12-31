@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Base" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 1920 2160">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: url(#DÃ©gradÃ©_sans_nom_253);
+      }
+    </style>
+    <radialGradient id="DÃ©gradÃ©_sans_nom_253" data-name="DÃ©gradÃ© sans nom 253" cx="963.67" cy="2159.41" fx="963.67" fy="2159.41" r="2366.03" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#000"/>
+      <stop offset=".33" stop-color="#000203"/>
+      <stop offset=".63" stop-color="#00090e"/>
+      <stop offset=".91" stop-color="#001520"/>
+      <stop offset="1" stop-color="#001a28"/>
+    </radialGradient>
+  </defs>
+  <rect id="BG" class="cls-1" width="1920" height="2160"/>
+</svg>

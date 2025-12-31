@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Base" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 32.32 36">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: url(#Nouvelle_nuance_de_dÃ©gradÃ©_1);
+      }
+    </style>
+    <linearGradient id="Nouvelle_nuance_de_dÃ©gradÃ©_1" data-name="Nouvelle nuance de dÃ©gradÃ© 1" x1="-4.04" y1="30.44" x2="20.82" y2="5.58" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#70623e"/>
+      <stop offset="1" stop-color="#c9a84c"/>
+    </linearGradient>
+  </defs>
+  <path class="cls-1" d="M18.48,19.58L1.98,35.98c.08.01.17.02.27.02.4,0,.78-.11,1.1-.3h-.01s19.99-11.3,19.99-11.3l-4.84-4.82ZM18.48,16.48l4.89-4.86L3.34.29c-.31-.18-.69-.29-1.1-.29-.11,0-.23,0-.34.03h.01s16.56,16.46,16.56,16.46ZM.17,1.39c-.11.25-.17.54-.17.85h0v31.53h0c0,.33.07.64.19.91h0s16.73-16.65,16.73-16.65L.17,1.39ZM31.19,19.95l-5.88,3.33-5.27-5.24,5.31-5.28,5.84,3.3c.68.39,1.13,1.12,1.13,1.95s-.45,1.55-1.12,1.94h-.01s0,0,0,0Z"/>
+</svg>
