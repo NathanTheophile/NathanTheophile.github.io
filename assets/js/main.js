@@ -5,12 +5,12 @@ const skillsScroll = document.querySelector(".skills-scroll");
 const skillsPanels = skillsScroll ? Array.from(skillsScroll.querySelectorAll(".skills-panel")) : [];
 
 const slideDirections = {
-  "skills:projects": "left",
-  "contact:skills": "left",
-  "contact:projects": "left",
-  "skills:contact": "right",
-  "projects:skills": "right",
-  "projects:contact": "right",
+  "skills:projects": "right",
+  "contact:skills": "right",
+  "contact:projects": "right",
+  "skills:contact": "left",
+  "projects:skills": "left",
+  "projects:contact": "left",
 };
 
 let activePageId = "skills";
