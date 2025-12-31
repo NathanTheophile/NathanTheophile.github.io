@@ -196,6 +196,7 @@ body {
 .section-columns {
   display: block;
   padding: 0;
+  position: relative;
 }
 
 .section-hero {
@@ -318,9 +319,26 @@ body {
   z-index: 2;
 }
 
+.stroke-flow-layer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 1;
+}
+
 .falling-leaf {
   position: absolute;
   width: clamp(6px, 0.8vw, 12px);
+  opacity: 0;
+  will-change: transform, opacity;
+  pointer-events: none;
+}
+
+.flowing-stroke {
+  position: absolute;
+  left: 0;
+  top: 0;
   opacity: 0;
   will-change: transform, opacity;
   pointer-events: none;
@@ -388,6 +406,33 @@ body {
 
 .skills-detail--art {
   background-image: url("../img/tree/skills-art-bg.svg");
+}
+
+.skills-waves {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: clamp(70px, 12vh, 140px);
+  pointer-events: none;
+  z-index: 3;
+}
+
+.skills-waves svg {
+  width: 120vw;
+  height: 100%;
+  display: block;
+  position: relative;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.skills-waves path {
+  fill: none;
+  stroke: #d8b86a;
+  stroke-width: 3;
+  opacity: 0.35;
+  stroke-linecap: round;
 }
 
 @media (max-width: 900px) {
