@@ -4,14 +4,9 @@ const pageById = Object.fromEntries(pages.map((page) => [page.dataset.page, page
 const skillsScroll = document.querySelector(".skills-scroll");
 const skillsPanels = skillsScroll ? Array.from(skillsScroll.querySelectorAll(".skills-panel")) : [];
 
-const slideDirections = {
-  "skills:projects": "right",
-  "contact:skills": "right",
-  "contact:projects": "right",
-  "skills:contact": "left",
-  "projects:skills": "left",
-  "projects:contact": "left",
-};
+const pageOrder = navLinks.length
+  ? Array.from(navLinks).map((link) => link.dataset.page)
+  : pages.map((page) => page.dataset.page);
 
 let activePageId = "skills";
 
@@ -22,7 +17,12 @@ const setActiveLink = (pageId) => {
 };
 
 const getDirection = (fromId, toId) => {
-  return slideDirections[`${fromId}:${toId}`] || "left";
+  const fromIndex = pageOrder.indexOf(fromId);
+  const toIndex = pageOrder.indexOf(toId);
+  if (fromIndex === -1 || toIndex === -1) {
+    return "left";
+  }
+  return toIndex > fromIndex ? "right" : "left";
 };
 
 const resetPageStyles = (page) => {
@@ -38,8 +38,8 @@ const switchPage = (nextId) => {
   const currentPage = pageById[activePageId];
   const nextPage = pageById[nextId];
   const direction = getDirection(activePageId, nextId);
-  const enterFrom = direction === "left" ? "100%" : "-100%";
-  const exitTo = direction === "left" ? "-100%" : "100%";
+  const enterFrom = direction === "left" ? "-100%" : "100%";
+  const exitTo = direction === "left" ? "100%" : "-100%";
 
   nextPage.style.transition = "none";
   nextPage.style.transform = `translateX(${enterFrom})`;
