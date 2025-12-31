@@ -146,15 +146,18 @@ body {
 }
 
 .section-columns {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  align-items: center;
-  text-align: center;
-  gap: 2rem;
-  padding: 0 8vw;
+  display: block;
+  padding: 0;
 }
 
 .section-hero {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.section-contact {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -188,6 +191,7 @@ body {
 
 .skills-scroll {
   height: 100%;
+  width: 100%;
   overflow-y: auto;
   scroll-snap-type: y mandatory;
   scroll-behavior: smooth;
