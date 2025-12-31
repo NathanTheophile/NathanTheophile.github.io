@@ -3,12 +3,16 @@ const pages = Array.from(document.querySelectorAll('.page'));
 const pageContainer = document.querySelector('.page-container');
 const siteHeader = document.querySelector('.site-header');
 const skillsScroll = document.querySelector('.skills-scroll');
+const leafLayer = document.querySelector('.leaf-fall-layer');
 
 const pageOrder = navLinks.map((link) => link.dataset.page).filter(Boolean);
 const pageMap = new Map(pages.map((page) => [page.dataset.page, page]));
 
 let activePage = document.querySelector('.page.is-active')?.dataset.page || pageOrder[0];
 let viewportWidth = window.innerWidth;
+let leafInterval = null;
+
+const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 
 const setViewportWidth = () => {
   viewportWidth = window.innerWidth;
@@ -45,11 +49,13 @@ const updateActivePage = (nextPage) => {
   if (!nextPage || nextPage === activePage) {
     setPagePositions(activePage, 0);
     updateHeaderVisibility();
+    setLeafFallState(activePage === 'skills');
     return;
   }
   activePage = nextPage;
   setPagePositions(activePage, 0);
   updateHeaderVisibility();
+  setLeafFallState(activePage === 'skills');
 };
 
 const getAdjacentPage = (direction) => {
@@ -135,3 +141,91 @@ if (skillsScroll) {
 setViewportWidth();
 setPagePositions(activePage, 0);
 updateHeaderVisibility();
+setLeafFallState(activePage === 'skills');
+
+function randomBetween(min, max) {
+  return Math.random() * (max - min) + min;
+}
+
+function buildLeafKeyframes(maxDrop, maxSway, startRotation) {
+  const keyframes = [];
+  const steps = 8;
+  const easeOutCirc = 'cubic-bezier(0.37, 0, 0.63, 1)';
+  const drift = randomBetween(-maxSway * 0.3, maxSway * 0.3);
+  const directionStart = Math.random() < 0.5 ? -1 : 1;
+
+  for (let step = 0; step <= steps; step += 1) {
+    const progress = step / steps;
+    const drop = maxDrop * progress;
+    const swingDirection = step === 0 ? 0 : directionStart * (step % 2 === 0 ? -1 : 1);
+    const swingMagnitude = maxSway * (0.35 + progress * 0.65);
+    const currentX = swingDirection * swingMagnitude + drift * progress;
+    const currentRotation = step === 0 ? startRotation : swingDirection * -45;
+
+    keyframes.push({
+      transform: `translate(${currentX.toFixed(2)}px, ${drop.toFixed(2)}px) rotate(${currentRotation.toFixed(2)}deg)`,
+      opacity: Number((0.65 * (1 - progress)).toFixed(2)),
+      easing: easeOutCirc,
+    });
+  }
+
+  return keyframes;
+}
+
+function createFallingLeaf() {
+  if (!leafLayer || prefersReducedMotion.matches) return;
+
+  const rect = leafLayer.getBoundingClientRect();
+  if (!rect.width || !rect.height) return;
+
+  const leaf = document.createElement('img');
+  leaf.src = 'assets/img/tree/leave.svg';
+  leaf.alt = '';
+  leaf.className = 'falling-leaf';
+  const size = randomBetween(6, 12);
+  leaf.style.width = `${size}px`;
+  leaf.style.height = 'auto';
+
+  const startX = randomBetween(rect.width * 0.15, rect.width * 0.85);
+  const startY = randomBetween(rect.height * 0.05, rect.height * 0.4);
+  leaf.style.left = `${startX}px`;
+  leaf.style.top = `${startY}px`;
+
+  const maxDrop = rect.height * randomBetween(0.5, 0.85);
+  const maxSway = rect.width * randomBetween(0.05, 0.12);
+  const startRotation = randomBetween(-30, 30);
+
+  const animation = leaf.animate(buildLeafKeyframes(maxDrop, maxSway, startRotation), {
+    duration: randomBetween(10400, 18000),
+    easing: 'linear',
+    fill: 'forwards',
+  });
+
+  animation.addEventListener('finish', () => {
+    leaf.remove();
+  });
+
+  leafLayer.appendChild(leaf);
+}
+
+function setLeafFallState(shouldRun) {
+  if (!leafLayer) return;
+
+  if (leafInterval) {
+    clearInterval(leafInterval);
+    leafInterval = null;
+  }
+
+  if (!shouldRun || prefersReducedMotion.matches) {
+    leafLayer.innerHTML = '';
+    return;
+  }
+
+  leafInterval = setInterval(createFallingLeaf, 250);
+}
+
+if (prefersReducedMotion?.addEventListener) {
+  prefersReducedMotion.addEventListener('change', () => {
+    setLeafFallState(activePage === 'skills');
+  });
+}

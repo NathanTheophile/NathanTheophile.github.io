@@ -156,12 +156,14 @@ body {
   .nav-links {
     position: static;
     transform: none;
-    display: flex;
-    gap: 1.5rem;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    column-gap: 1.5rem;
+    row-gap: 0.75rem;
     padding: 0;
     width: 100%;
-    justify-content: center;
-    flex-wrap: wrap;
+    justify-items: center;
+    text-align: center;
   }
 }
 
@@ -279,6 +281,7 @@ body {
   padding: 0;
   align-items: flex-end;
   overflow: hidden;
+  position: relative;
 }
 
 .skills-panel--intro img {
@@ -296,6 +299,22 @@ body {
   display: block;
   object-position: bottom center;
   opacity: 0;
+}
+
+.leaf-fall-layer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.falling-leaf {
+  position: absolute;
+  width: clamp(6px, 0.8vw, 12px);
+  opacity: 0;
+  will-change: transform, opacity;
+  pointer-events: none;
 }
 
 @media (max-aspect-ratio: 1/1) {
@@ -332,8 +351,10 @@ body {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   height: 100%;
-  gap: 2rem;
-  align-content: center;
+  gap: 0;
+  padding: 0;
+  width: 100%;
+  align-content: stretch;
   align-items: stretch;
 }
 
