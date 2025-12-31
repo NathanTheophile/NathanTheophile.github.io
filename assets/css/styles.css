@@ -49,6 +49,15 @@ body {
   -ms-user-select: none;
 }
 
+.mouse-trail {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 20;
+}
+
 /* Layout */
 .site-header {
   height: var(--header-height, 10vh);
