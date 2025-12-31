@@ -377,7 +377,7 @@ if (window.jQuery) {
       const mixAmount = Math.random();
       $path.attr('stroke', mixColors(accentRgb, mutedRgb, mixAmount));
 
-      const duration = 3500 + index * 700;
+      const duration = 7000 + index * 1400;
       const amplitude = 18 + index * 6;
       const animateWave = () => {
         window.jQuery({ phase: 0 }).animate(
@@ -387,7 +387,8 @@ if (window.jQuery) {
             easing: 'linear',
             step(now) {
               const offset = Math.sin(now) * amplitude;
-              $path.attr('transform', `translate(${offset} 0)`);
+              const verticalOffset = Math.cos(now) * amplitude * 0.12;
+              $path.attr('transform', `translate(${offset} ${verticalOffset})`);
             },
             complete() {
               $path.attr('transform', 'translate(0 0)');
