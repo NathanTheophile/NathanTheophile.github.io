@@ -54,8 +54,8 @@ body {
   top: 0;
   left: 0;
   z-index: 10;
-  background: rgba(4, 16, 24, 0.8);
-  backdrop-filter: blur(6px);
+  background: transparent;
+  backdrop-filter: none;
 }
 
 /* Navigation */
@@ -211,6 +211,19 @@ body {
   justify-content: center;
   text-align: center;
   padding: 0 8vw;
+}
+
+.skills-panel--intro {
+  padding: 0;
+  align-items: flex-end;
+}
+
+.skills-panel--intro img {
+  width: 100%;
+  height: auto;
+  max-width: 100%;
+  display: block;
+  object-position: bottom center;
 }
 
 .skills-tree {
