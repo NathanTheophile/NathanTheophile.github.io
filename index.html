@@ -12,9 +12,9 @@
       <nav class="site-nav">
         <img class="logo" src="assets/img/header/logo.svg" alt="Logo" />
         <ul class="nav-links">
-          <li><a href="#projects">PROJECTS</a></li>
-          <li><a class="active" href="#skills">SKILLS</a></li>
-          <li><a href="#contact">CONTACT</a></li>
+          <li><a href="#projects" data-page="projects">PROJECTS</a></li>
+          <li><a class="active" href="#skills" data-page="skills">SKILLS</a></li>
+          <li><a href="#contact" data-page="contact">CONTACT</a></li>
         </ul>
         <div class="lang-switch">
           <img src="assets/img/header/flag-en.svg" alt="English" />
@@ -24,25 +24,40 @@
       </nav>
     </header>
     
-    <main>
-      <section class="section section-columns" id="skills">
-        <!-- Placeholder div -->
+    <main class="page-container">
+      <section class="page section section-columns is-active" id="skills" data-page="skills">
+        <div class="skills-scroll">
+          <div class="skills-panel skills-panel--intro">
+            <div class="section-contact__content">
+              <h2>Skills - Section 1</h2>
+              <p>Présentation générale des compétences.</p>
+            </div>
+          </div>
+          <div class="skills-panel skills-panel--details">
+            <div class="section-contact__content">
+              <h2>Gameplay</h2>
+              <p>Mécaniques, systèmes, et interactions joueur.</p>
+            </div>
+            <div class="section-contact__content">
+              <h2>Technical</h2>
+              <p>Optimisation, outils internes, pipelines.</p>
+            </div>
+            <div class="section-contact__content">
+              <h2>Collaboration</h2>
+              <p>Communication, documentation, itération.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="page section section-hero" id="projects" data-page="projects">
         <div class="section-contact__content">
           <h2>Projets</h2>
-          <p>Discutons de votre prochain projet.</p>
+          <p>Découvrez les projets récents et favoris.</p>
         </div>
       </section>
 
-      <section class="section section-hero" id="projects">
-        <!-- Placeholder div -->
-        <div class="section-contact__content">
-          <h2>Contact</h2>
-          <p>Discutons de votre prochain projet.</p>
-        </div>
-      </section>
-
-      <section class="section section-contact" id="contact">
-        <!-- Placeholder div -->
+      <section class="page section section-contact" id="contact" data-page="contact">
         <div class="section-contact__content">
           <h2>Contact</h2>
           <p>Discutons de votre prochain projet.</p>
