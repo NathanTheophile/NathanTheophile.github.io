@@ -26,18 +26,58 @@
 }
 
 body {
-  min-height: 100vh;
-  background: var(--background);
-  color: var(--foreground);
-  display: flex;
-  flex-direction: column;
+  background: #041018; /* example dark background */
+  color: #c9a84c;
+  font-family: "Cake Mono", monospace;
 }
 
-.site-header {
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
-  padding: 1.5rem 6vw;
+.logo {
+  height: 32px;
 }
+
+.lang-switch img {
+  height: 18px;
+}
+
+
+html {
+  scroll-snap-type: y mandatory;
+}
+
+
+
+
+.site-header {
+  height: 10vh;
+  width: 100%;
+}
+
+/* Section */
+.section {
+  scroll-snap-align: start;
+}
+
+.section-columns {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: center;
+  text-align: center;
+  gap: 2rem;
+  padding: 0 8vw;
+}
+
+.section-hero {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.hero-content {
+  max-width: 800px;
+}
+
+
 
 .site-title {
   font-weight: 600;
@@ -51,6 +91,28 @@ body {
   justify-content: center;
   padding: 4rem 6vw;
 }
+
+.site-nav {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 6vw;
+}
+
+.nav-links {
+  display: flex;
+  gap: 2rem;
+  list-style: none;
+}
+
+.lang-switch {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+
 
 .hero {
   max-width: 640px;
