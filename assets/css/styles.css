@@ -166,8 +166,8 @@ body {
 
 .page-container {
   position: relative;
-  height: calc(100vh - var(--header-height, 10vh));
-  margin-top: var(--header-height, 10vh);
+  height: 100vh;
+  margin-top: 0;
   overflow: hidden;
 }
 
@@ -224,6 +224,16 @@ body {
   max-width: 100%;
   display: block;
   object-position: bottom center;
+}
+
+@media (max-aspect-ratio: 1/1) {
+  .skills-panel--intro img {
+    width: auto;
+    height: 75vh;
+    max-width: none;
+    max-height: 90vh;
+    object-fit: contain;
+  }
 }
 
 .skills-tree {
