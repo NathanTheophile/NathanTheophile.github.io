@@ -431,8 +431,13 @@ body {
   fill: none;
   stroke: #d8b86a;
   stroke-width: 3;
-  opacity: 0.35;
+  opacity: 0.65;
   stroke-linecap: round;
+}
+
+.skills-waves path.skills-waves__line--thick {
+  stroke-width: 8;
+  opacity: 0.35;
 }
 
 @media (max-width: 900px) {
