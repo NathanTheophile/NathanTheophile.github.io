@@ -186,6 +186,79 @@ function buildLeafKeyframes(maxDrop, maxSway, startRotation) {
   return keyframes;
 }
 
+let canopyMaskCache = null;
+let canopyMaskSource = null;
+
+function getCanopyBounds(treeRect, layerRect) {
+  if (!treeRect || !treeRect.width || !treeRect.height) {
+    return {
+      left: layerRect.left,
+      right: layerRect.right,
+      top: layerRect.top,
+      bottom: layerRect.bottom,
+    };
+  }
+
+  const canopyBounds = {
+    left: treeRect.left + treeRect.width * 0.06,
+    right: treeRect.left + treeRect.width * 0.94,
+    top: treeRect.top + treeRect.height * 0.04,
+    bottom: treeRect.top + treeRect.height * 0.56,
+  };
+
+  return {
+    left: Math.max(canopyBounds.left, layerRect.left),
+    right: Math.min(canopyBounds.right, layerRect.right),
+    top: Math.max(canopyBounds.top, layerRect.top),
+    bottom: Math.min(canopyBounds.bottom, layerRect.bottom),
+  };
+}
+
+function getCanopyMask(imageElement) {
+  if (!imageElement?.complete || !imageElement.naturalWidth || !imageElement.naturalHeight) {
+    return null;
+  }
+
+  if (canopyMaskSource !== imageElement.src) {
+    canopyMaskSource = imageElement.src;
+    canopyMaskCache = null;
+  }
+
+  if (canopyMaskCache) {
+    return canopyMaskCache;
+  }
+
+  const canvas = document.createElement('canvas');
+  canvas.width = imageElement.naturalWidth;
+  canvas.height = imageElement.naturalHeight;
+  const context = canvas.getContext('2d');
+  if (!context) return null;
+
+  context.drawImage(imageElement, 0, 0);
+  canopyMaskCache = {
+    data: context.getImageData(0, 0, canvas.width, canvas.height).data,
+    width: canvas.width,
+    height: canvas.height,
+  };
+
+  return canopyMaskCache;
+}
+
+function isPointInCanopyMask(pageX, pageY, treeRect, maskData) {
+  if (!maskData || !treeRect.width || !treeRect.height) return false;
+
+  const relativeX = (pageX - treeRect.left) / treeRect.width;
+  const relativeY = (pageY - treeRect.top) / treeRect.height;
+  if (relativeX < 0 || relativeX > 1 || relativeY < 0 || relativeY > 1) return false;
+
+  const pixelX = Math.min(maskData.width - 1, Math.max(0, Math.round(relativeX * maskData.width)));
+  const pixelY = Math.min(maskData.height - 1, Math.max(0, Math.round(relativeY * maskData.height)));
+  const alpha = maskData.data[(pixelY * maskData.width + pixelX) * 4 + 3];
+
+  return alpha > 10;
+}
+
+
 function createFallingLeaf() {
   if (!leafLayer || prefersReducedMotion.matches) return;
 
@@ -193,19 +266,8 @@ function createFallingLeaf() {
   if (!layerRect.width || !layerRect.height) return;
 
   const treeRect = skillsIntroImage?.getBoundingClientRect();
-  const spawnBounds = treeRect && treeRect.width && treeRect.height
-    ? {
-        left: Math.max(treeRect.left, layerRect.left),
-        right: Math.min(treeRect.right, layerRect.right),
-        top: Math.max(treeRect.top, layerRect.top),
-        bottom: Math.min(treeRect.bottom, layerRect.bottom),
-      }
-    : {
-        left: layerRect.left,
-        right: layerRect.right,
-        top: layerRect.top,
-        bottom: layerRect.bottom,
-      };
+  const spawnBounds = getCanopyBounds(treeRect, layerRect);
+  const canopyMask = treeRect ? getCanopyMask(skillsIntroImage) : null;
 
   const spawnWidth = Math.max(0, spawnBounds.right - spawnBounds.left);
   const spawnHeight = Math.max(0, spawnBounds.bottom - spawnBounds.top);
@@ -222,8 +284,28 @@ function createFallingLeaf() {
   leaf.style.width = `${size}px`;
   leaf.style.height = 'auto';
 
-  const startX = randomBetween(safeSpawnWidth * 0.15, safeSpawnWidth * 0.85) + spawnOffsetX;
-  const startY = randomBetween(safeSpawnHeight * 0.05, safeSpawnHeight * 0.4) + spawnOffsetY;
+  let startX = randomBetween(safeSpawnWidth * 0.15, safeSpawnWidth * 0.85) + spawnOffsetX;
+  let startY = randomBetween(safeSpawnHeight * 0.1, safeSpawnHeight * 0.9) + spawnOffsetY;
+  const maxAttempts = 18;
+
+  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+    const candidateX = randomBetween(safeSpawnWidth * 0.15, safeSpawnWidth * 0.85) + spawnOffsetX;
+    const candidateY = randomBetween(safeSpawnHeight * 0.1, safeSpawnHeight * 0.9) + spawnOffsetY;
+    const pageX = candidateX + layerRect.left;
+    const pageY = candidateY + layerRect.top;
+
+    if (!canopyMask || !treeRect) {
+      startX = candidateX;
+      startY = candidateY;
+      break;
+    }
+
+    if (isPointInCanopyMask(pageX, pageY, treeRect, canopyMask)) {
+      startX = candidateX;
+      startY = candidateY;
+      break;
+    }
+  }
   leaf.style.left = `${startX}px`;
   leaf.style.top = `${startY}px`;
 
