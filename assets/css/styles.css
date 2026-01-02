@@ -246,6 +246,41 @@ body {
   font-size: clamp(1.5rem, 3vw, 2.5rem);
 }
 
+.project-card {
+  margin-top: 2rem;
+  border: none;
+  background: transparent;
+  color: var(--accent);
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: "Cake Mono", monospace;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.project-card__image {
+  width: 220px;
+  height: 220px;
+  background-color: #12f11c;
+  border: 4px solid var(--accent);
+  box-shadow: 0 0 0 2px var(--dark);
+  display: block;
+}
+
+.project-card__name {
+  font-size: 40px;
+  letter-spacing: 0.08em;
+}
+
+.project-card__year,
+.project-card__category {
+  font-size: 18px;
+  letter-spacing: 0.1em;
+  color: #a0894a;
+}
+
 .skills-scroll {
   height: 100%;
   width: 100%;
