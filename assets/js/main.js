@@ -1,113 +1,55 @@
+import { createLeafFall } from './modules/leaf-fall.js';
+import { createMouseTrail } from './modules/mouse-trail.js';
+import { initNavigation } from './modules/navigation.js';
+import { initSkillsWaves } from './modules/skills-waves.js';
+
 const navLinks = Array.from(document.querySelectorAll('.nav-links a'));
 const pages = Array.from(document.querySelectorAll('.page'));
 const pageContainer = document.querySelector('.page-container');
+const siteHeader = document.querySelector('.site-header');
+const skillsScroll = document.querySelector('.skills-scroll');
+const leafLayer = document.querySelector('.leaf-fall-layer');
+const skillsIntro = document.querySelector('.skills-panel--intro');
+const skillsIntroImage = skillsIntro?.querySelector('img');
+const trailCanvas = document.querySelector('.mouse-trail');
 
-const pageOrder = navLinks.map((link) => link.dataset.page).filter(Boolean);
-const pageMap = new Map(pages.map((page) => [page.dataset.page, page]));
+const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 
-let activePage = document.querySelector('.page.is-active')?.dataset.page || pageOrder[0];
-let viewportWidth = window.innerWidth;
+let activePage = null;
 
-const setViewportWidth = () => {
-  viewportWidth = window.innerWidth;
-};
+const leafFall = createLeafFall({
+  leafLayer,
+  skillsIntroImage,
+  prefersReducedMotion,
+});
 
-const setPagePositions = (targetPage = activePage, offsetX = 0) => {
-  const targetIndex = pageOrder.indexOf(targetPage);
+const mouseTrail = createMouseTrail({
+  trailCanvas,
+  pageContainer,
+  prefersReducedMotion,
+});
 
-  pages.forEach((page) => {
-    const pageIndex = pageOrder.indexOf(page.dataset.page);
-    const baseOffset = (pageIndex - targetIndex) * viewportWidth;
-    page.style.transform = `translateX(${baseOffset + offsetX}px)`;
-    page.classList.toggle('is-active', page.dataset.page === targetPage);
+const navigation = initNavigation({
+  navLinks,
+  pages,
+  pageContainer,
+  siteHeader,
+  skillsScroll,
+  onPageChange: (nextPage) => {
+    activePage = nextPage;
+    leafFall?.setActivePage(nextPage);
+  },
+  onResize: () => {
+    mouseTrail?.resize();
+  },
+});
+
+initSkillsWaves({ prefersReducedMotion });
+
+if (prefersReducedMotion?.addEventListener) {
+  prefersReducedMotion.addEventListener('change', () => {
+    const currentPage = activePage ?? navigation?.getActivePage?.();
+    leafFall?.handleReducedMotionChange(currentPage);
+    mouseTrail?.handleReducedMotionChange();
   });
-
-  navLinks.forEach((link) => {
-    link.classList.toggle('active', link.dataset.page === targetPage);
-  });
-};
-
-const updateActivePage = (nextPage) => {
-  if (!nextPage || nextPage === activePage) {
-    setPagePositions(activePage, 0);
-    return;
-  }
-  activePage = nextPage;
-  setPagePositions(activePage, 0);
-};
-
-const getAdjacentPage = (direction) => {
-  const currentIndex = pageOrder.indexOf(activePage);
-  const nextIndex = currentIndex + direction;
-  return pageOrder[nextIndex];
-};
-
-navLinks.forEach((link) => {
-  link.addEventListener('click', (event) => {
-    event.preventDefault();
-    updateActivePage(link.dataset.page);
-  });
-});
-
-let isDragging = false;
-let dragStarted = false;
-let startX = 0;
-let startY = 0;
-
-pageContainer.addEventListener('pointerdown', (event) => {
-  if (event.button !== 0) return;
-
-  isDragging = true;
-  dragStarted = false;
-  startX = event.clientX;
-  startY = event.clientY;
-  pageContainer.setPointerCapture(event.pointerId);
-});
-
-pageContainer.addEventListener('pointermove', (event) => {
-  if (!isDragging) return;
-
-  const deltaX = event.clientX - startX;
-  const deltaY = event.clientY - startY;
-
-  if (!dragStarted) {
-    if (Math.abs(deltaX) < 8 || Math.abs(deltaX) < Math.abs(deltaY)) {
-      return;
-    }
-    dragStarted = true;
-    pageContainer.classList.add('is-dragging');
-  }
-
-  event.preventDefault();
-  setPagePositions(activePage, deltaX);
-});
-
-const endDrag = (event) => {
-  if (!isDragging) return;
-
-  const deltaX = event.clientX - startX;
-  const threshold = Math.min(140, viewportWidth * 0.2);
-
-  pageContainer.classList.remove('is-dragging');
-
-  if (dragStarted && Math.abs(deltaX) > threshold) {
-    const direction = deltaX > 0 ? -1 : 1;
-    updateActivePage(getAdjacentPage(direction));
-  } else {
-    setPagePositions(activePage, 0);
-  }
-
-  isDragging = false;
-  dragStarted = false;
-};
-
-pageContainer.addEventListener('pointerup', endDrag);
-pageContainer.addEventListener('pointercancel', endDrag);
-
-window.addEventListener('resize', () => {
-  setViewportWidth();
-  setPagePositions(activePage, 0);
-});
-
-setViewportWidth();
-setPagePositions(activePage, 0);
+}
