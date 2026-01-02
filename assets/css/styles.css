@@ -419,7 +419,7 @@ body {
 }
 
 .skills-waves svg {
-  width: 120vw;
+  width: 300vw;
   height: 100%;
   display: block;
   position: relative;
@@ -431,8 +431,13 @@ body {
   fill: none;
   stroke: #d8b86a;
   stroke-width: 3;
-  opacity: 0.35;
+  opacity: 0.65;
   stroke-linecap: round;
+}
+
+.skills-waves path.skills-waves__line--thick {
+  stroke-width: 8;
+  opacity: 0.35;
 }
 
 @media (max-width: 900px) {
