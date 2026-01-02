@@ -10,6 +10,7 @@ const buildLeafKeyframes = (maxDrop, maxSway, startRotation) => {
   const directionStart = Math.random() < 0.5 ? -1 : 1;
   const maxOpacity = 0.8;
   const minOpacity = 0.1;
+  const risePhase = 0.18;
 
   for (let step = 0; step <= steps; step += 1) {
     const progress = step / steps;
@@ -18,8 +19,11 @@ const buildLeafKeyframes = (maxDrop, maxSway, startRotation) => {
     const swingMagnitude = maxSway * (0.35 + progress * 0.65);
     const currentX = swingDirection * swingMagnitude + drift * progress;
     const currentRotation = step === 0 ? startRotation : swingDirection * -45;
-    const opacity = minOpacity + (maxOpacity - minOpacity) * (1 - progress);
-
+    const opacity =
+      progress <= risePhase
+        ? minOpacity + (maxOpacity - minOpacity) * (progress / risePhase)
+        : maxOpacity - (maxOpacity - minOpacity) * ((progress - risePhase) / (1 - risePhase));
+        
     keyframes.push({
       transform: `translate(${currentX.toFixed(2)}px, ${drop.toFixed(2)}px) rotate(${currentRotation.toFixed(2)}deg)`,
       opacity: Number(opacity.toFixed(2)),
