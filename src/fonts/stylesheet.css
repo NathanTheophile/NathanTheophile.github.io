@@ -1,0 +1,39 @@
+@font-face {
+    font-family: 'Cake Mono';
+    src: url('CakeMono-Light.eot');
+    src: local('Cake Mono Light'), local('CakeMono-Light'),
+        url('CakeMono-Light.eot?#iefix') format('embedded-opentype'),
+        url('CakeMono-Light.woff2') format('woff2'),
+        url('CakeMono-Light.woff') format('woff'),
+        url('CakeMono-Light.ttf') format('truetype');
+    font-weight: 300;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Cake Mono';
+    src: url('CakeMono-Bold.eot');
+    src: local('Cake Mono Bold'), local('CakeMono-Bold'),
+        url('CakeMono-Bold.eot?#iefix') format('embedded-opentype'),
+        url('CakeMono-Bold.woff2') format('woff2'),
+        url('CakeMono-Bold.woff') format('woff'),
+        url('CakeMono-Bold.ttf') format('truetype');
+    font-weight: bold;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Cake Mono';
+    src: url('CakeMono-Regular.eot');
+    src: local('Cake Mono'), local('CakeMono-Regular'),
+        url('CakeMono-Regular.eot?#iefix') format('embedded-opentype'),
+        url('CakeMono-Regular.woff2') format('woff2'),
+        url('CakeMono-Regular.woff') format('woff'),
+        url('CakeMono-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+

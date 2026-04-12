@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Calque_2" data-name="Calque 2" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 28.42 26.86">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: url(#Dégradé_sans_nom_96);
+      }
+    </style>
+    <linearGradient id="Dégradé_sans_nom_96" data-name="Dégradé sans nom 96" x1="14.21" y1="-145.81" x2="14.21" y2="279.67" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#70623e" stop-opacity=".1"/>
+      <stop offset="1" stop-color="#a89d8a"/>
+    </linearGradient>
+  </defs>
+  <g id="Base">
+    <path class="cls-1" d="M28.42,2.93C19.47,12.44,12.34,19.19,2.09,26.86-2.12,19.74.38,10.43,6.43,5.13,12.26-.26,21.87-2.05,28.42,2.93h0Z"/>
+  </g>
+</svg>
