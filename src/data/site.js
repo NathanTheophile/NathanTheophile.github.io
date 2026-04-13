@@ -4,8 +4,8 @@ export const STORAGE_KEY = 'nt-portfolio-language';
 export const siteCopy = {
   metaTitles: {
     skills: {
-      fr: 'Nathan Theophile | Competences',
-      en: 'Nathan Theophile | Skills',
+      fr: 'Nathan Theophile | Accueil',
+      en: 'Nathan Theophile | Home',
     },
     projects: {
       fr: 'Nathan Theophile | Projets',
@@ -18,7 +18,7 @@ export const siteCopy = {
   },
   nav: {
     projects: { fr: 'Projets', en: 'Projects' },
-    skills: { fr: 'Competences', en: 'Skills' },
+    skills: { fr: 'Accueil', en: 'Home' },
     contact: { fr: 'Contact', en: 'Contact' },
   },
   navAriaLabel: {

@@ -12,6 +12,7 @@ import treeUpperUrl from '../images/tree_upper.svg';
 import {
   cloneSkillCategories,
   exportSkillCategories,
+  exportSkillCategoriesModule,
   loadSkillCategories,
   resetSkillCategories,
   saveSkillCategories,
@@ -56,10 +57,13 @@ const editorCopy = {
     close: 'Fermer l editeur',
     addNode: 'Ajouter un node',
     copyJson: 'Copier le JSON',
+    saveProject: 'Sauver dans le projet',
     reset: 'Reinitialiser',
     autosave: 'Sauvegarde locale automatique active.',
     copied: 'Configuration copiee dans le presse-papiers.',
     copyFailed: 'Copie impossible depuis ce navigateur.',
+    projectSaved: 'Fichier du projet mis a jour. Tu peux commit et push.',
+    projectSaveFailed: 'Impossible d ecrire le fichier du projet depuis ce navigateur.',
     resetDone: 'Les arbres par defaut ont ete restaures.',
     resetConfirm: 'Restaurer les arbres d origine ?',
     dragHint: 'Glisse les nodes et l origine sur la grille.',
@@ -127,10 +131,13 @@ const editorCopy = {
     close: 'Close editor',
     addNode: 'Add node',
     copyJson: 'Copy JSON',
+    saveProject: 'Save to project',
     reset: 'Reset',
     autosave: 'Local autosave is active.',
     copied: 'Configuration copied to clipboard.',
     copyFailed: 'Clipboard copy is not available here.',
+    projectSaved: 'Project file updated. You can commit and push it.',
+    projectSaveFailed: 'Unable to write the project file from this browser.',
     resetDone: 'Default trees restored.',
     resetConfirm: 'Restore the default trees?',
     dragHint: 'Drag nodes and the origin on the virtual grid.',
@@ -634,11 +641,13 @@ function renderSkillMap(category, language, editorState = {}) {
         >
           <span class="skill-node__socket" aria-hidden="true">
             <span class="skill-node__frame"></span>
-            <span
-              class="skill-node__core ${node.iconImage ? 'skill-node__core--image' : ''}"
-              ${node.iconImage ? `style="background-image: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(0,0,0,0.14)), url('${escapeHtml(node.iconImage)}');"` : ''}
-            >
+            <span class="skill-node__core">
+              <span
+                class="skill-node__media ${node.iconImage ? 'skill-node__media--image' : ''}"
+                ${node.iconImage ? `style="background-image: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(0,0,0,0.14)), url('${escapeHtml(node.iconImage)}');"` : ''}
+              >
               <span class="skill-node__icon">${renderNodeVisual(node)}</span>
+              </span>
             </span>
           </span>
           <span class="skill-node__title">${escapeHtml(node.title[language])}</span>
@@ -662,6 +671,9 @@ function renderSkillMap(category, language, editorState = {}) {
                   ? `
                     <button class="skill-stage__toolbar-button" type="button" data-editor-action="copy-json">
                       ${escapeHtml(getEditorText(language, 'copyJson'))}
+                    </button>
+                    <button class="skill-stage__toolbar-button" type="button" data-editor-action="save-project">
+                      ${escapeHtml(getEditorText(language, 'saveProject'))}
                     </button>
                     <button class="skill-stage__toolbar-button skill-stage__toolbar-button--ghost" type="button" data-editor-action="reset">
                       ${escapeHtml(getEditorText(language, 'reset'))}
@@ -1274,6 +1286,36 @@ export const renderHomePage = {
       }
     };
 
+    const saveProjectFile = async () => {
+      const moduleSource = exportSkillCategoriesModule(categoriesState);
+
+      if (!('showSaveFilePicker' in window)) {
+        setStatusMessage(getEditorText(language, 'projectSaveFailed'));
+        return;
+      }
+
+      try {
+        const fileHandle = await window.showSaveFilePicker({
+          suggestedName: 'skills.seed.js',
+          types: [
+            {
+              description: 'JavaScript module',
+              accept: {
+                'text/javascript': ['.js'],
+              },
+            },
+          ],
+        });
+        const writable = await fileHandle.createWritable();
+        await writable.write(moduleSource);
+        await writable.close();
+        setStatusMessage(getEditorText(language, 'projectSaved'));
+      } catch (error) {
+        if (error?.name === 'AbortError') return;
+        setStatusMessage(getEditorText(language, 'projectSaveFailed'));
+      }
+    };
+
     if (pageContent && homeSections.length > 1) {
       let snapLock = false;
       let snapTimer = 0;
@@ -1421,6 +1463,7 @@ export const renderHomePage = {
           renderStage();
         }
         if (action === 'copy-json') copyEditorJson();
+        if (action === 'save-project') saveProjectFile();
         if (action === 'reset') resetEditorTrees();
         return;
       }

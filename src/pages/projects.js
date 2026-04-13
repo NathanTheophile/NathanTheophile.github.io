@@ -103,6 +103,13 @@ const projectsUiCopy = {
     fr: 'Une URL d image au format large. Ratio recommande: 3:1 pour la grille.',
     en: 'One wide image URL. Recommended ratio: 3:1 for the grid.',
   },
+  sortDateButton: { fr: 'Date', en: 'Date' },
+  sortDateAsc: { fr: 'Croissante', en: 'Ascending' },
+  sortDateDesc: { fr: 'Decroissante', en: 'Descending' },
+  sortDateToggleLabel: {
+    fr: (direction) => `Trier par date ${direction === 'asc' ? 'croissante' : 'decroissante'}`,
+    en: (direction) => `Sort by date ${direction === 'asc' ? 'ascending' : 'descending'}`,
+  },
   mediaOpenImage: { fr: 'Ouvrir l image en grand', en: 'Open image fullscreen' },
   mediaOpenVideo: { fr: 'Ouvrir la video en grand', en: 'Open video fullscreen' },
   mediaPrev: { fr: 'Media precedent', en: 'Previous media' },
@@ -328,6 +335,29 @@ function renderFilterButtons(language) {
       `
     )
     .join('');
+}
+
+function renderSortButton(language, direction = 'desc') {
+  const iconPath = direction === 'asc'
+    ? '<path d="M12 18V7" /><path d="M7.5 11.5 12 7l4.5 4.5" />'
+    : '<path d="M12 6v11" /><path d="m7.5 12.5 4.5 4.5 4.5-4.5" />';
+
+  return `
+    <button
+      class="projects-sort-button"
+      type="button"
+      data-project-sort-toggle
+      data-sort-direction="${direction}"
+      aria-label="${escapeHtml(projectsUiCopy.sortDateToggleLabel[language](direction))}"
+    >
+      <span class="sr-only">${escapeHtml(projectsUiCopy.sortDateButton[language])}</span>
+      <span class="projects-sort-button__icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" focusable="false">
+          ${iconPath}
+        </svg>
+      </span>
+    </button>
+  `;
 }
 
 function renderProjectMediaCarousel(mediaItems, kind, language) {
@@ -828,6 +858,9 @@ export const renderProjectsPage = {
           <div class="filter-row">
             ${renderFilterButtons(language)}
           </div>
+          <div class="projects-toolbar__sort">
+            ${renderSortButton(language)}
+          </div>
         </div>
         <div class="projects-stage">
           <div class="projects-grid" data-project-grid>
@@ -850,6 +883,8 @@ export const renderProjectsPage = {
     const cardEditButtons = Array.from(root.querySelectorAll('[data-project-card-edit]'));
     const cardDeleteButtons = Array.from(root.querySelectorAll('[data-project-card-delete]'));
     const filterButtons = Array.from(root.querySelectorAll('[data-project-filter]'));
+    const sortToggle = root.querySelector('[data-project-sort-toggle]');
+    const grid = root.querySelector('[data-project-grid]');
     const detail = root.querySelector('[data-project-detail]');
     const carousel = root.querySelector('[data-project-carousel]');
     const workshopOpenButton = root.querySelector('[data-project-workshop-open]');
@@ -866,16 +901,30 @@ export const renderProjectsPage = {
     const lightboxCloseButton = root.querySelector('[data-project-lightbox-close]');
 
     let activeFilter = 'all';
+    let activeSort = 'desc';
     let activeProject = getInitialProject(projectList);
     let editingProject = null;
     let lightboxItems = [];
     let lightboxIndex = 0;
     let lastLightboxTrigger = null;
+    const projectOrder = new Map(projectList.map((project, index) => [project.slug, index]));
+    const cardShellsBySlug = new Map(
+      cards.map((card) => [card.dataset.projectCard, card.closest('.project-card-shell')])
+    );
 
     const getVisibleProjects = () =>
       projectList.filter(
         (project) => activeFilter === 'all' || (project.filters ?? [project.filter]).includes(activeFilter)
       );
+
+    const sortProjects = (projects) =>
+      [...projects].sort((left, right) => {
+        const leftYear = Number.parseInt(left.year, 10) || 0;
+        const rightYear = Number.parseInt(right.year, 10) || 0;
+        const yearDelta = activeSort === 'asc' ? leftYear - rightYear : rightYear - leftYear;
+        if (yearDelta !== 0) return yearDelta;
+        return (projectOrder.get(left.slug) ?? 0) - (projectOrder.get(right.slug) ?? 0);
+      });
 
     const fillFormFromProject = (project) => {
       if (!form) return;
@@ -1006,10 +1055,19 @@ export const renderProjectsPage = {
     };
 
     const syncCards = () => {
-      const visibleProjects = getVisibleProjects();
+      const visibleProjects = sortProjects(getVisibleProjects());
 
       if (!visibleProjects.some((project) => project.slug === activeProject?.slug)) {
         activeProject = visibleProjects[0] ?? projectList[0] ?? null;
+      }
+
+      if (grid) {
+        const visibleSlugs = new Set(visibleProjects.map((project) => project.slug));
+        const hiddenProjects = projectList.filter((project) => !visibleSlugs.has(project.slug));
+        [...visibleProjects, ...hiddenProjects].forEach((project) => {
+          const cardShell = cardShellsBySlug.get(project.slug);
+          if (cardShell) grid.append(cardShell);
+        });
       }
 
       cards.forEach((card) => {
@@ -1025,6 +1083,23 @@ export const renderProjectsPage = {
       filterButtons.forEach((button) => {
         button.classList.toggle('is-active', button.dataset.projectFilter === activeFilter);
       });
+    };
+
+    const syncSortButton = () => {
+      if (!sortToggle) return;
+      const iconPath = activeSort === 'asc'
+        ? '<path d="M12 18V7" /><path d="M7.5 11.5 12 7l4.5 4.5" />'
+        : '<path d="M12 6v11" /><path d="m7.5 12.5 4.5 4.5 4.5-4.5" />';
+      sortToggle.dataset.sortDirection = activeSort;
+      sortToggle.setAttribute('aria-label', projectsUiCopy.sortDateToggleLabel[language](activeSort));
+      sortToggle.innerHTML = `
+        <span class="sr-only">${escapeHtml(projectsUiCopy.sortDateButton[language])}</span>
+        <span class="projects-sort-button__icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" focusable="false">
+            ${iconPath}
+          </svg>
+        </span>
+      `;
     };
 
     const openModal = (project = null) => {
@@ -1077,6 +1152,13 @@ export const renderProjectsPage = {
         syncCards();
         syncDetail();
       });
+    });
+
+    sortToggle?.addEventListener('click', () => {
+      activeSort = activeSort === 'desc' ? 'asc' : 'desc';
+      syncSortButton();
+      syncCards();
+      syncDetail();
     });
 
     cards.forEach((card) => {
@@ -1268,6 +1350,7 @@ export const renderProjectsPage = {
     }
 
     syncFilters();
+    syncSortButton();
     syncCards();
     syncDetail();
 

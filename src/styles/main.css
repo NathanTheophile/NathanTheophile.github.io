@@ -904,13 +904,20 @@ textarea {
     radial-gradient(circle at 30% 26%, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.02) 40%, rgba(0, 0, 0, 0.56) 100%),
     linear-gradient(180deg, color-mix(in srgb, var(--stage-accent) 22%, #0c131a), #071018 78%);
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
-  background-position: center;
-  background-repeat: no-repeat;
-  background-size: cover;
   overflow: hidden;
 }
 
-.skill-node__core--image {
+.skill-node__media {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+.skill-node__media--image {
   box-shadow:
     inset 0 0 0 1px rgba(255, 255, 255, 0.08),
     inset 0 -24px 34px rgba(0, 0, 0, 0.18);
@@ -960,8 +967,8 @@ textarea {
   transform: rotate(45deg);
 }
 
-.skill-node[data-shape="diamond"] .skill-node__icon {
-  transform: rotate(-45deg);
+.skill-node[data-shape="diamond"] .skill-node__media {
+  transform: rotate(-45deg) scale(1.18);
 }
 
 .skill-node[data-size="small"] .skill-node__socket {
@@ -1540,15 +1547,17 @@ textarea {
   align-content: end;
   justify-items: start;
   gap: 0.48rem;
-  width: min(33rem, 100%);
+  width: 100%;
+  max-width: none;
   position: relative;
   z-index: 1;
 }
 
 .project-carousel__panel {
-  display: inline-grid;
+  display: grid;
   justify-self: start;
-  max-width: 100%;
+  width: 100%;
+  max-width: none;
   padding: 0;
   border-radius: 0;
   background: transparent;
@@ -1569,6 +1578,7 @@ textarea {
   flex-wrap: wrap;
   justify-content: flex-start;
   gap: 0.3rem;
+  padding-left: 0.18rem;
   color: rgba(244, 239, 229, 0.76);
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -1581,8 +1591,9 @@ textarea {
   font-family: var(--font-display);
   font-size: clamp(2.6rem, 5.8vw, 4.2rem);
   line-height: 0.93;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.03em;
   text-transform: uppercase;
+  width: 100%;
   justify-self: start;
   text-align: left;
   text-shadow: 0 8px 28px rgba(0, 0, 0, 0.42);
@@ -1590,6 +1601,7 @@ textarea {
 
 .project-carousel__role {
   margin: 0;
+  padding-left: 0.18rem;
   color: var(--gold-bright);
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -1835,6 +1847,17 @@ textarea {
 
 .projects-toolbar {
   grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.9rem 1rem;
+}
+
+.projects-toolbar__sort {
+  display: flex;
+  justify-content: flex-end;
+  margin-left: auto;
 }
 
 .filter-chip {
@@ -1852,6 +1875,51 @@ textarea {
   background: rgba(221, 185, 95, 0.16);
   color: var(--gold-bright);
   transform: translateY(-1px);
+}
+
+.projects-sort-button {
+  appearance: none;
+  display: inline-grid;
+  place-items: center;
+  width: 2.7rem;
+  height: 2.7rem;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+  color: rgba(244, 239, 229, 0.9);
+  background: rgba(255, 255, 255, 0.035);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+  transition: transform 180ms ease, background 180ms ease, color 180ms ease, box-shadow 180ms ease;
+}
+
+.projects-sort-button:hover,
+.projects-sort-button:focus-visible {
+  transform: translateY(-1px);
+  color: var(--gold-bright);
+  background: rgba(221, 185, 95, 0.12);
+  box-shadow: inset 0 0 0 1px rgba(221, 185, 95, 0.22);
+}
+
+.projects-sort-button__icon {
+  display: grid;
+  place-items: center;
+  width: 1.15rem;
+  height: 1.15rem;
+}
+
+.projects-sort-button__icon svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.projects-sort-button__icon path {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .projects-grid {
@@ -3573,6 +3641,12 @@ textarea {
 
   .project-workshop__actions {
     justify-items: start;
+  }
+
+  .projects-toolbar__sort {
+    width: 100%;
+    justify-content: flex-start;
+    margin-left: 0;
   }
 
   .hero-section__visual {
