@@ -100,9 +100,14 @@ export const renderContactPage = {
           <div class="contact-slate__main">
             <article class="contact-slate__identity" data-reveal>
               <div class="contact-slate__identity-row">
-                <div class="contact-slate__portrait" aria-hidden="true">
+                <div class="contact-slate__portrait">
                   <div class="contact-slate__portrait-frame">
-                    <span class="contact-slate__portrait-label">${escapeHtml(t(siteCopy.contactPage.portraitPlaceholder))}</span>
+                    <img
+                      class="contact-slate__portrait-image"
+                      src="https://i.imgur.com/SM9S0T9.jpeg"
+                      alt="Nathan Theophile"
+                      loading="lazy"
+                    />
                   </div>
                 </div>
                 <div class="contact-slate__copy">

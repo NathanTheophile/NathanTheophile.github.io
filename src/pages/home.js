@@ -762,9 +762,7 @@ export const renderHomePage = {
               <h1 class="hero-title hero-title--poster">${t(siteCopy.home.title)}</h1>
               <span class="hero-identity__rule" aria-hidden="true"></span>
               <div class="hero-roles hero-roles--single">
-                ${siteCopy.home.roles
-                  .map((role) => `<span>${t(role)}</span>`)
-                  .join('<span class="hero-roles__separator">.</span>')}
+                <span>${t(siteCopy.home.role)}</span>
               </div>
             </div>
             <div class="hero-actions hero-actions--bottom" data-reveal>
@@ -809,6 +807,22 @@ export const renderHomePage = {
     const cleanups = [];
     const addCleanup = (callback) => {
       if (typeof callback === 'function') cleanups.push(callback);
+    };
+
+    const syncHeroRoleSpacing = () => {
+      const roleLabel = heroRoles?.querySelector('span');
+      if (!heroTitle || !heroRoles || !roleLabel) return;
+
+      heroRoles.style.width = '';
+      heroRoles.style.setProperty('--hero-role-spacing', '0px');
+
+      const targetWidth = heroTitle.getBoundingClientRect().width * 0.94;
+      const naturalWidth = roleLabel.getBoundingClientRect().width;
+      const characterGaps = Math.max(roleLabel.textContent.trim().length - 1, 1);
+      const spacing = Math.max(0, (targetWidth - naturalWidth) / characterGaps);
+
+      heroRoles.style.width = `${Math.round(targetWidth)}px`;
+      heroRoles.style.setProperty('--hero-role-spacing', `${spacing.toFixed(2)}px`);
     };
 
     let categoriesState = loadSkillCategories();
@@ -1393,17 +1407,21 @@ export const renderHomePage = {
       };
 
       const syncTrunkTopAfterLayout = () => {
+        syncHeroRoleSpacing();
         syncTrunkTop();
         syncBridgeWaves();
         requestAnimationFrame(() => {
+          syncHeroRoleSpacing();
           syncTrunkTop();
           syncBridgeWaves();
         });
         trunkSyncTimerA = window.setTimeout(() => {
+          syncHeroRoleSpacing();
           syncTrunkTop();
           syncBridgeWaves();
         }, 120);
         trunkSyncTimerB = window.setTimeout(() => {
+          syncHeroRoleSpacing();
           syncTrunkTop();
           syncBridgeWaves();
         }, 320);

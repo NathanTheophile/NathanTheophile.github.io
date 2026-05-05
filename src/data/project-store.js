@@ -1,17 +1,8 @@
-import { projectFilters, projects } from './projects.js';
+import { projects } from './projects.js';
 
 export const PROJECTS_STORAGE_KEY = 'nt-portfolio-custom-projects';
 export const ACTIVE_PROJECT_STORAGE_KEY = 'nt-portfolio-active-project';
 export const HIDDEN_PROJECTS_STORAGE_KEY = 'nt-portfolio-hidden-projects';
-
-export const projectAccentOptions = [
-  { id: 'development', label: { fr: 'Developpement', en: 'Development' } },
-  { id: 'art', label: { fr: 'Direction visuelle', en: 'Art direction' } },
-  { id: 'creativity', label: { fr: 'Creativite', en: 'Creativity' } },
-];
-
-const validFilterIds = new Set(projectFilters.map((filter) => filter.id).filter((id) => id !== 'all'));
-const validAccentIds = new Set(projectAccentOptions.map((accent) => accent.id));
 
 function getStorage(kind) {
   try {
@@ -91,14 +82,6 @@ function ensureMedia(value = {}) {
   };
 }
 
-function ensureFilters(value) {
-  const normalized = (Array.isArray(value) ? value : [value])
-    .map((entry) => trimString(entry))
-    .filter((entry) => validFilterIds.has(entry));
-
-  return normalized.length ? [...new Set(normalized)] : ['prototype'];
-}
-
 export function createProjectSlug(value, fallback = 'project') {
   const normalized = trimString(value)
     .toLowerCase()
@@ -119,7 +102,6 @@ export function normalizeProjectRecord(input = {}, { custom = false } = {}) {
   const support = ensureLocalizedList(input.support ?? input.platforms, []);
   const stack = ensureStringList(input.stack);
   const outcomes = ensureLocalizedList(input.outcomes, []);
-  const filters = ensureFilters(input.filters ?? input.filter);
   const year = trimString(String(input.year ?? '')) || String(new Date().getFullYear());
   const slugSource = trimString(input.slug) || title.fr || title.en;
   const createdAt = Number.isFinite(Number(input.createdAt)) ? Number(input.createdAt) : Date.now();
@@ -127,11 +109,8 @@ export function normalizeProjectRecord(input = {}, { custom = false } = {}) {
   return {
     slug: createProjectSlug(slugSource),
     year,
-    filter: filters[0],
-    filters,
     featured: Boolean(input.featured),
     spotlight: Boolean(input.spotlight),
-    accent: validAccentIds.has(input.accent) ? input.accent : 'development',
     title,
     role: ensureLocalizedValue(input.role, fallbackRole),
     roles,
@@ -158,11 +137,8 @@ function createExportProject(project) {
   return {
     slug: normalized.slug,
     year: normalized.year,
-    filter: normalized.filter,
-    filters: normalized.filters,
     featured: normalized.featured,
     spotlight: normalized.spotlight,
-    accent: normalized.accent,
     title: normalized.title,
     role: normalized.role,
     roles: normalized.roles,
@@ -222,8 +198,6 @@ export function exportProjectsDataModule(projectList = getExportableStoredProjec
   return [
     '// Generated from the local portfolio project editor.',
     '// This file can replace src/data/projects.js.',
-    `export const projectFilters = ${JSON.stringify(projectFilters, null, 2)};`,
-    '',
     `export const projects = ${JSON.stringify(exportableProjects, null, 2)};`,
     '',
   ].join('\n');

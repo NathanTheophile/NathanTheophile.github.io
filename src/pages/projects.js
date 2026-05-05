@@ -1,4 +1,3 @@
-import { projectFilters } from '../data/projects.js';
 import {
   addStoredProject,
   clearRememberedActiveProjectSlug,
@@ -8,7 +7,6 @@ import {
   getAllProjects,
   getRememberedActiveProjectSlug,
   getStoredProjects,
-  projectAccentOptions,
   rememberActiveProjectSlug,
   removeStoredProject,
   saveStoredProject,
@@ -90,8 +88,6 @@ const projectsUiCopy = {
   sectionDetails: { fr: 'Details', en: 'Details' },
   sectionMedia: { fr: 'Medias', en: 'Media' },
   fieldYear: { fr: 'Annee', en: 'Year' },
-  fieldFilter: { fr: 'Categories', en: 'Categories' },
-  fieldAccent: { fr: 'Accent visuel', en: 'Visual accent' },
   fieldSpotlight: { fr: 'Afficher dans le carousel', en: 'Show in carousel' },
   fieldTitleFr: { fr: 'Titre (FR)', en: 'Title (FR)' },
   fieldTitleEn: { fr: 'Titre (EN)', en: 'Title (EN)' },
@@ -101,7 +97,7 @@ const projectsUiCopy = {
   fieldSummaryEn: { fr: 'Description courte (EN)', en: 'Short summary (EN)' },
   fieldDescriptionFr: { fr: 'Description detaillee (FR)', en: 'Detailed description (FR)' },
   fieldDescriptionEn: { fr: 'Description detaillee (EN)', en: 'Detailed description (EN)' },
-  fieldStack: { fr: 'Stack', en: 'Stack' },
+  fieldStack: { fr: 'Outils & langages', en: 'Tools & languages' },
   fieldSupport: { fr: 'Support / plateforme', en: 'Support / platform' },
   fieldBanner: { fr: 'Image banniere', en: 'Banner image' },
   fieldOutcomesFr: { fr: 'Resultats (FR)', en: 'Outcomes (FR)' },
@@ -109,8 +105,8 @@ const projectsUiCopy = {
   fieldImages: { fr: 'Images', en: 'Images' },
   fieldVideos: { fr: 'Videos', en: 'Videos' },
   fieldStackHint: {
-    fr: 'Une stack par ligne ou separee par des virgules.',
-    en: 'One stack item per line or separated with commas.',
+    fr: 'Un outil ou langage par ligne, ou separe par des virgules.',
+    en: 'One tool or language per line, or separated with commas.',
   },
   fieldOutcomeHint: {
     fr: 'Un resultat par ligne.',
@@ -124,10 +120,12 @@ const projectsUiCopy = {
     fr: 'Un support par ligne ou separe par des virgules.',
     en: 'One support per line or separated with commas.',
   },
-  fieldCategoryHint: {
-    fr: 'Tu peux cocher plusieurs categories.',
-    en: 'You can pick multiple categories.',
-  },
+  filterRole: { fr: 'Role', en: 'Role' },
+  filterSupport: { fr: 'Support', en: 'Support' },
+  filterTools: { fr: 'Outils & langages', en: 'Tools & languages' },
+  filterAllRoles: { fr: 'Tous les roles', en: 'All roles' },
+  filterAllSupports: { fr: 'Tous les supports', en: 'All supports' },
+  filterAllTools: { fr: 'Tous les outils/langages', en: 'All tools/languages' },
   fieldMediaHint: {
     fr: 'Une URL par ligne. Tu peux coller des liens directs, YouTube, Vimeo, etc.',
     en: 'One URL per line. You can paste direct links, YouTube, Vimeo, and so on.',
@@ -158,6 +156,8 @@ const projectsUiCopy = {
   },
 };
 
+const spotlightProjectOrder = ['calaveroll', 'dream-fragment', 'lord-of-shadows'];
+
 function escapeHtml(value) {
   return String(value ?? '')
     .replaceAll('&', '&amp;')
@@ -173,24 +173,40 @@ function escapeCssUrl(value) {
     .replaceAll('"', '\\"');
 }
 
-function getProjectFilterLabel(filterId, language) {
-  return projectFilters.find((filter) => filter.id === filterId)?.label[language] ?? filterId;
-}
-
-function getProjectAccentLabel(accentId, language) {
-  return projectAccentOptions.find((accent) => accent.id === accentId)?.label[language] ?? accentId;
-}
-
-function getProjectFilterLabels(project, language) {
-  return (project.filters ?? [project.filter]).map((filterId) => getProjectFilterLabel(filterId, language));
-}
-
 function getProjectRoleLabels(project, language) {
   return project.roles?.[language]?.length ? project.roles[language] : [project.role[language]];
 }
 
 function getProjectSupportLabels(project, language) {
   return project.support?.[language]?.length ? project.support[language] : [];
+}
+
+function getProjectToolLabels(project) {
+  return Array.isArray(project.stack) ? project.stack : [];
+}
+
+function normalizeFilterValue(value) {
+  return String(value ?? '').trim().toLocaleLowerCase();
+}
+
+function getUniqueProjectOptions(projectList, readOptions) {
+  const options = projectList
+    .flatMap(readOptions)
+    .map((option) => String(option ?? '').trim())
+    .filter(Boolean);
+
+  return [...new Set(options)].sort((left, right) => left.localeCompare(right));
+}
+
+function sortSpotlightProjects(projectList) {
+  const orderLookup = new Map(spotlightProjectOrder.map((slug, index) => [slug, index]));
+
+  return [...projectList].sort((left, right) => {
+    const leftOrder = orderLookup.get(left.slug) ?? Number.MAX_SAFE_INTEGER;
+    const rightOrder = orderLookup.get(right.slug) ?? Number.MAX_SAFE_INTEGER;
+
+    return leftOrder - rightOrder || String(left.title.fr).localeCompare(String(right.title.fr));
+  });
 }
 
 function getInitialProject(projectList) {
@@ -323,13 +339,14 @@ function getProjectMediaItems(project, language, kind = 'all') {
 function renderProjectCard(project, language, index) {
   const banner = getProjectBanner(project);
   const initials = project.title[language].slice(0, 2).toUpperCase();
-  const mediaMarkup = banner
-    ? `<img src="${escapeHtml(banner)}" alt="${escapeHtml(project.title[language])}" loading="lazy" />`
-    : `<span>${escapeHtml(initials)}</span>`;
+  const mediaStyle = banner
+    ? ` style="--project-card-banner: url(&quot;${escapeHtml(escapeCssUrl(banner))}&quot;)"`
+    : '';
+  const mediaMarkup = banner ? '' : `<span>${escapeHtml(initials)}</span>`;
   const roleSummary = getProjectRoleLabels(project, language).join(' / ');
 
   return `
-    <article class="project-card-shell" data-filters="${escapeHtml((project.filters ?? [project.filter]).join(','))}" style="transition-delay:${index * 70}ms" data-reveal>
+    <article class="project-card-shell" style="transition-delay:${index * 70}ms" data-reveal>
       <button class="project-card__edit" type="button" data-project-card-edit="${escapeHtml(project.slug)}" aria-label="${escapeHtml(projectsUiCopy.editTile[language])}">
         <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
           <path d="M4 20l4.1-.8L18.6 8.7l-3.3-3.3L4.8 15.9 4 20Z" />
@@ -346,7 +363,7 @@ function renderProjectCard(project, language, index) {
         </svg>
       </button>
       <button class="project-card" type="button" data-project-card="${escapeHtml(project.slug)}">
-        <span class="project-card__media" data-accent="${escapeHtml(project.accent)}" data-initials="${escapeHtml(initials)}" data-has-image="${banner ? 'true' : 'false'}">
+        <span class="project-card__media" data-initials="${escapeHtml(initials)}" data-has-image="${banner ? 'true' : 'false'}"${mediaStyle}>
           ${mediaMarkup}
         </span>
         <span class="project-card__eyebrow">${escapeHtml(project.year)}</span>
@@ -358,16 +375,32 @@ function renderProjectCard(project, language, index) {
   `;
 }
 
-function renderFilterButtons(language) {
-  return projectFilters
-    .map(
-      (filter) => `
-        <button class="filter-chip" type="button" data-project-filter="${filter.id}">
-          ${escapeHtml(filter.label[language])}
-        </button>
-      `
-    )
+function renderProjectFilterSelect(name, label, allLabel, options) {
+  const optionMarkup = options
+    .map((option) => `<option value="${escapeHtml(option)}">${escapeHtml(option)}</option>`)
     .join('');
+
+  return `
+    <label class="projects-filter-select">
+      <span>${escapeHtml(label)}</span>
+      <select data-project-filter-select="${escapeHtml(name)}">
+        <option value="">${escapeHtml(allLabel)}</option>
+        ${optionMarkup}
+      </select>
+    </label>
+  `;
+}
+
+function renderProjectFilterSelects(projectList, language) {
+  const roles = getUniqueProjectOptions(projectList, (project) => getProjectRoleLabels(project, language));
+  const supports = getUniqueProjectOptions(projectList, (project) => getProjectSupportLabels(project, language));
+  const tools = getUniqueProjectOptions(projectList, getProjectToolLabels);
+
+  return `
+    ${renderProjectFilterSelect('role', projectsUiCopy.filterRole[language], projectsUiCopy.filterAllRoles[language], roles)}
+    ${renderProjectFilterSelect('support', projectsUiCopy.filterSupport[language], projectsUiCopy.filterAllSupports[language], supports)}
+    ${renderProjectFilterSelect('tool', projectsUiCopy.filterTools[language], projectsUiCopy.filterAllTools[language], tools)}
+  `;
 }
 
 function renderSortButton(language, direction = 'desc') {
@@ -479,16 +512,15 @@ function renderProjectMedia(project, language) {
 function renderProjectDetail(project, language) {
   if (!project) {
     return `
-      <span class="detail-card__eyebrow">${escapeHtml(siteCopy.projectsPage.eyebrow[language])}</span>
-      <h3>${escapeHtml(siteCopy.projectsPage.title[language])}</h3>
+      <div class="detail-card__scroll">
+        <span class="detail-card__eyebrow">${escapeHtml(siteCopy.projectsPage.eyebrow[language])}</span>
+        <h3>${escapeHtml(siteCopy.projectsPage.title[language])}</h3>
+      </div>
     `;
   }
 
   const stack = project.stack.map((item) => `<span class="stack-pill">${escapeHtml(item)}</span>`).join('');
   const support = getProjectSupportLabels(project, language)
-    .map((item) => `<span class="stack-pill">${escapeHtml(item)}</span>`)
-    .join('');
-  const categories = getProjectFilterLabels(project, language)
     .map((item) => `<span class="stack-pill">${escapeHtml(item)}</span>`)
     .join('');
   const mediaMarkup = renderProjectMedia(project, language);
@@ -502,34 +534,38 @@ function renderProjectDetail(project, language) {
     : '';
 
   return `
-    <div class="detail-card__header">
-      <span class="detail-card__eyebrow">${escapeHtml(project.year)}</span>
-    </div>
-    <h3>${escapeHtml(project.title[language])}</h3>
-    <p class="detail-card__role">${escapeHtml(getProjectRoleLabels(project, language).join(' / '))}</p>
-    <p>${escapeHtml(project.description[language])}</p>
-    <div class="detail-card__stack">
-      <span class="detail-card__section-label">${escapeHtml(projectsUiCopy.fieldFilter[language])}</span>
-      <div class="stack-pill-row">${categories}</div>
-    </div>
-    ${
-      support
-        ? `
-          <div class="detail-card__stack">
-            <span class="detail-card__section-label">${escapeHtml(projectsUiCopy.fieldSupport[language])}</span>
-            <div class="stack-pill-row">${support}</div>
-          </div>
-        `
-        : ''
-    }
-    <div class="detail-card__stack">
-      <span class="detail-card__section-label">${escapeHtml(siteCopy.projectsPage.stackLabel[language])}</span>
-      <div class="stack-pill-row">${stack}</div>
-    </div>
-    ${mediaMarkup}
-    <div class="detail-card__footer">
-      <p class="detail-card__footnote">${escapeHtml(footerNote)}</p>
-      ${deleteAction}
+    <div class="detail-card__scroll">
+      <div class="detail-card__header">
+        <span class="detail-card__eyebrow">${escapeHtml(project.year)}</span>
+      </div>
+      <h3>${escapeHtml(project.title[language])}</h3>
+      <p class="detail-card__role">${escapeHtml(getProjectRoleLabels(project, language).join(' / '))}</p>
+      <p>${escapeHtml(project.description[language])}</p>
+      ${
+        support
+          ? `
+            <div class="detail-card__stack">
+              <span class="detail-card__section-label">${escapeHtml(projectsUiCopy.fieldSupport[language])}</span>
+              <div class="stack-pill-row">${support}</div>
+            </div>
+          `
+          : ''
+      }
+      ${
+        stack
+          ? `
+            <div class="detail-card__stack">
+              <span class="detail-card__section-label">${escapeHtml(siteCopy.projectsPage.stackLabel[language])}</span>
+              <div class="stack-pill-row">${stack}</div>
+            </div>
+          `
+          : ''
+      }
+      ${mediaMarkup}
+      <div class="detail-card__footer">
+        <p class="detail-card__footnote">${escapeHtml(footerNote)}</p>
+        ${deleteAction}
+      </div>
     </div>
   `;
 }
@@ -548,7 +584,6 @@ function renderProjectSpotlight(project, language, index, total) {
     <article
       class="project-carousel__slide${index === 0 ? ' is-active' : ''}"
       data-project-slide="${index}"
-      data-accent="${escapeHtml(project.accent)}"
       aria-hidden="${index === 0 ? 'false' : 'true'}"
       ${backgroundStyle}
     >
@@ -614,25 +649,6 @@ function renderWorkshopPanel(language, customCount) {
 }
 
 function renderProjectModal(language) {
-  const filterOptions = projectFilters
-    .filter((filter) => filter.id !== 'all')
-    .map(
-      (filter) => `
-        <label class="project-form__check-option">
-          <input name="filters" type="checkbox" value="${filter.id}" />
-          <span>${escapeHtml(filter.label[language])}</span>
-        </label>
-      `
-    )
-    .join('');
-  const accentOptions = projectAccentOptions
-    .map(
-      (accent) => `
-        <option value="${accent.id}">${escapeHtml(getProjectAccentLabel(accent.id, language))}</option>
-      `
-    )
-    .join('');
-
   return `
     <div class="project-modal" data-project-modal hidden>
       <div class="project-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="project-modal-title">
@@ -671,19 +687,6 @@ function renderProjectModal(language) {
               <label class="project-form__field">
                 <span>${escapeHtml(projectsUiCopy.fieldYear[language])}</span>
                 <input name="year" type="number" min="2000" max="2100" value="${new Date().getFullYear()}" required />
-              </label>
-              <div class="project-form__field">
-                <span>${escapeHtml(projectsUiCopy.fieldFilter[language])}</span>
-                <span class="project-form__check-grid">
-                  ${filterOptions}
-                </span>
-                <small>${escapeHtml(projectsUiCopy.fieldCategoryHint[language])}</small>
-              </div>
-              <label class="project-form__field">
-                <span>${escapeHtml(projectsUiCopy.fieldAccent[language])}</span>
-                <select name="accent">
-                  ${accentOptions}
-                </select>
               </label>
               <label class="project-form__checkbox">
                 <input name="spotlight" type="checkbox" />
@@ -813,8 +816,6 @@ function buildProjectPayload(form) {
 
   return {
     year: String(formData.get('year') ?? '').trim(),
-    filters: formData.getAll('filters').map((value) => String(value).trim()).filter(Boolean),
-    accent: String(formData.get('accent') ?? '').trim(),
     spotlight: formData.get('spotlight') === 'on',
     banner: String(formData.get('banner') ?? '').trim(),
     support: splitTextareaList(formData.get('support'), { allowComma: true }),
@@ -839,7 +840,7 @@ export const renderProjectsPage = {
   createContent: ({ t, language }) => {
     const allProjects = getAllProjects();
     const spotlightProjects = [
-      ...allProjects.filter((project) => project.spotlight),
+      ...sortSpotlightProjects(allProjects.filter((project) => project.spotlight)),
       ...allProjects.filter((project) => !project.spotlight),
     ].slice(0, Math.min(3, allProjects.length));
     const activeProject = getInitialProject(allProjects);
@@ -901,8 +902,8 @@ export const renderProjectsPage = {
 
       <section class="projects-workspace section-shell">
         <div class="projects-toolbar" data-reveal>
-          <div class="filter-row">
-            ${renderFilterButtons(language)}
+          <div class="projects-filter-row">
+            ${renderProjectFilterSelects(allProjects, language)}
           </div>
           <div class="projects-toolbar__sort">
             ${renderSortButton(language)}
@@ -923,12 +924,12 @@ export const renderProjectsPage = {
       ${renderProjectLightbox(language)}
     `;
   },
-  enhance: ({ root, language, rerender }) => {
+  enhance: ({ root, pageRoot, language, rerender }) => {
     const projectList = getAllProjects();
     const cards = Array.from(root.querySelectorAll('[data-project-card]'));
     const cardEditButtons = Array.from(root.querySelectorAll('[data-project-card-edit]'));
     const cardDeleteButtons = Array.from(root.querySelectorAll('[data-project-card-delete]'));
-    const filterButtons = Array.from(root.querySelectorAll('[data-project-filter]'));
+    const filterSelects = Array.from(root.querySelectorAll('[data-project-filter-select]'));
     const sortToggle = root.querySelector('[data-project-sort-toggle]');
     const grid = root.querySelector('[data-project-grid]');
     const detail = root.querySelector('[data-project-detail]');
@@ -950,7 +951,7 @@ export const renderProjectsPage = {
     const lightboxDots = root.querySelector('[data-project-lightbox-dots]');
     const lightboxCloseButton = root.querySelector('[data-project-lightbox-close]');
 
-    let activeFilter = 'all';
+    let activeFilters = { role: '', support: '', tool: '' };
     let activeSort = 'desc';
     let activeProject = getInitialProject(projectList);
     let editingProject = null;
@@ -962,9 +963,29 @@ export const renderProjectsPage = {
       cards.map((card) => [card.dataset.projectCard, card.closest('.project-card-shell')])
     );
 
+    const preservePageScroll = (callback) => {
+      const previousScrollTop = pageRoot?.scrollTop;
+      callback();
+      if (!Number.isFinite(previousScrollTop)) return;
+
+      pageRoot.scrollTop = previousScrollTop;
+      requestAnimationFrame(() => {
+        pageRoot.scrollTop = previousScrollTop;
+      });
+    };
+
+    const matchesOption = (options, activeValue) => {
+      if (!activeValue) return true;
+      const normalizedActive = normalizeFilterValue(activeValue);
+      return options.some((option) => normalizeFilterValue(option) === normalizedActive);
+    };
+
     const getVisibleProjects = () =>
       projectList.filter(
-        (project) => activeFilter === 'all' || (project.filters ?? [project.filter]).includes(activeFilter)
+        (project) =>
+          matchesOption(getProjectRoleLabels(project, language), activeFilters.role) &&
+          matchesOption(getProjectSupportLabels(project, language), activeFilters.support) &&
+          matchesOption(getProjectToolLabels(project), activeFilters.tool)
       );
 
     const sortProjects = (projects) =>
@@ -985,7 +1006,6 @@ export const renderProjectsPage = {
       form.elements.rolesFr.value = getProjectRoleLabels(project, 'fr').join('\n');
       form.elements.rolesEn.value = getProjectRoleLabels(project, 'en').join('\n');
       form.elements.year.value = project?.year ?? new Date().getFullYear();
-      form.elements.accent.value = project?.accent ?? 'development';
       form.elements.spotlight.checked = Boolean(project?.spotlight);
       form.elements.summaryFr.value = project?.summary.fr ?? '';
       form.elements.summaryEn.value = project?.summary.en ?? '';
@@ -997,10 +1017,6 @@ export const renderProjectsPage = {
       form.elements.images.value = (project?.media?.images ?? []).join('\n');
       form.elements.videos.value = (project?.media?.videos ?? []).join('\n');
 
-      const selectedFilters = new Set(project?.filters ?? [project?.filter].filter(Boolean));
-      Array.from(form.querySelectorAll('input[name="filters"]')).forEach((input) => {
-        input.checked = selectedFilters.has(input.value);
-      });
     };
 
     const syncDetail = () => {
@@ -1104,14 +1120,14 @@ export const renderProjectsPage = {
       lightboxCloseButton?.focus();
     };
 
-    const syncCards = () => {
+    const syncCards = ({ reorder = true } = {}) => {
       const visibleProjects = sortProjects(getVisibleProjects());
 
       if (!visibleProjects.some((project) => project.slug === activeProject?.slug)) {
-        activeProject = visibleProjects[0] ?? projectList[0] ?? null;
+        activeProject = visibleProjects[0] ?? null;
       }
 
-      if (grid) {
+      if (grid && reorder) {
         const visibleSlugs = new Set(visibleProjects.map((project) => project.slug));
         const hiddenProjects = projectList.filter((project) => !visibleSlugs.has(project.slug));
         [...visibleProjects, ...hiddenProjects].forEach((project) => {
@@ -1122,16 +1138,23 @@ export const renderProjectsPage = {
 
       cards.forEach((card) => {
         const cardShell = card.closest('.project-card-shell');
-        const cardFilters = (cardShell?.dataset.filters ?? '').split(',').filter(Boolean);
-        const matches = activeFilter === 'all' || cardFilters.includes(activeFilter);
+        const cardProject = projectList.find((project) => project.slug === card.dataset.projectCard);
+        const matches = cardProject
+          ? matchesOption(getProjectRoleLabels(cardProject, language), activeFilters.role) &&
+            matchesOption(getProjectSupportLabels(cardProject, language), activeFilters.support) &&
+            matchesOption(getProjectToolLabels(cardProject), activeFilters.tool)
+          : false;
         if (cardShell) cardShell.hidden = !matches;
         card.classList.toggle('is-selected', card.dataset.projectCard === activeProject?.slug);
       });
     };
 
     const syncFilters = () => {
-      filterButtons.forEach((button) => {
-        button.classList.toggle('is-active', button.dataset.projectFilter === activeFilter);
+      filterSelects.forEach((select) => {
+        const filterName = select.dataset.projectFilterSelect;
+        if (filterName && select.value !== activeFilters[filterName]) {
+          select.value = activeFilters[filterName] ?? '';
+        }
       });
     };
 
@@ -1171,8 +1194,6 @@ export const renderProjectsPage = {
       fillFormFromProject(
         project ?? {
           year: String(new Date().getFullYear()),
-          accent: 'development',
-          filters: ['prototype'],
           roles: { fr: [], en: [] },
           title: { fr: '', en: '' },
           summary: { fr: '', en: '' },
@@ -1295,9 +1316,11 @@ export const renderProjectsPage = {
       }
     };
 
-    filterButtons.forEach((button) => {
-      button.addEventListener('click', () => {
-        activeFilter = button.dataset.projectFilter ?? 'all';
+    filterSelects.forEach((select) => {
+      select.addEventListener('change', () => {
+        const filterName = select.dataset.projectFilterSelect;
+        if (!filterName) return;
+        activeFilters = { ...activeFilters, [filterName]: select.value };
         syncFilters();
         syncCards();
         syncDetail();
@@ -1315,9 +1338,11 @@ export const renderProjectsPage = {
       card.addEventListener('click', () => {
         const nextProject = projectList.find((project) => project.slug === card.dataset.projectCard);
         if (!nextProject) return;
-        activeProject = nextProject;
-        syncCards();
-        syncDetail();
+        preservePageScroll(() => {
+          activeProject = nextProject;
+          syncCards({ reorder: false });
+          syncDetail();
+        });
       });
     });
 

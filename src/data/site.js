@@ -38,12 +38,7 @@ export const siteCopy = {
   },
   home: {
     title: { fr: 'Nathan Theophile', en: 'Nathan Theophile' },
-    roles: [
-      { fr: 'Game Developer', en: 'Game Developer' },
-      { fr: 'Gameplay', en: 'Gameplay' },
-      { fr: 'Outils', en: 'Tools' },
-      { fr: 'Direction interactive', en: 'Interactive Direction' },
-    ],
+    role: { fr: 'Game Developer', en: 'Game Developer' },
     tooltipHint: {
       fr: 'Survole un noeud',
       en: 'Hover a node',
@@ -59,7 +54,7 @@ export const siteCopy = {
       fr: 'Cette page recense des projets menes comme des slices : une promesse claire, un perimetre lisible et un resultat presentable. La grille est deja prete a accueillir tes vrais projets.',
       en: 'This page gathers projects built like slices: a clear promise, a readable scope and a presentable result. The grid is already ready for your real projects.',
     },
-    stackLabel: { fr: 'Stack', en: 'Stack' },
+    stackLabel: { fr: 'Outils & langages', en: 'Tools & languages' },
     outcomesLabel: { fr: 'Resultats', en: 'Outcomes' },
     emptyLinks: {
       fr: 'Les liens externes pourront etre ajoutes au fur et a mesure.',
