@@ -3,6 +3,8 @@ import {
   addStoredProject,
   clearRememberedActiveProjectSlug,
   deleteProjectBySlug,
+  exportProjectsDataModule,
+  exportStoredProjectsModule,
   getAllProjects,
   getRememberedActiveProjectSlug,
   getStoredProjects,
@@ -17,14 +19,45 @@ const projectsUiCopy = {
   workshopEyebrow: { fr: 'Atelier local', en: 'Local workshop' },
   workshopTitle: { fr: 'Ajouter un projet sans coder', en: 'Add a project without coding' },
   workshopBody: {
-    fr: 'Le formulaire ci-dessous cree des projets stockes dans ce navigateur. Parfait pour remplir la page pendant la mise au point du portfolio.',
-    en: 'The form below creates projects stored in this browser. Perfect for filling the page while the portfolio is still in progress.',
+    fr: 'Le formulaire ci-dessous cree des projets stockes dans ce navigateur. Ce sont des brouillons locaux tant que tu ne les exportes pas dans le projet.',
+    en: 'The form below creates projects stored in this browser. They remain local drafts until you export them into the project.',
   },
   workshopCount: {
     fr: (count) => `${count} projet${count > 1 ? 's' : ''} local${count > 1 ? 'aux' : ''}`,
     en: (count) => `${count} local project${count > 1 ? 's' : ''}`,
   },
   addProject: { fr: 'Ajouter un projet', en: 'Add project' },
+  exportProjects: { fr: 'Exporter les projets', en: 'Export projects' },
+  saveProjectsFile: { fr: 'Sauver projects.js', en: 'Save projects.js' },
+  copyProjectsCode: { fr: 'Copier le code', en: 'Copy code' },
+  noLocalProjects: {
+    fr: 'Ajoute au moins un projet local avant d exporter.',
+    en: 'Add at least one local project before exporting.',
+  },
+  exportSaved: {
+    fr: 'Module exporte. Integre-le dans src/data/projects.js puis commit.',
+    en: 'Module exported. Fold it into src/data/projects.js, then commit.',
+  },
+  projectsFileSaved: {
+    fr: 'projects.js sauvegarde. Relance le build puis commit.',
+    en: 'projects.js saved. Run the build again, then commit.',
+  },
+  projectsFileSaveUnsupported: {
+    fr: 'Sauvegarde directe indisponible ici. Utilise Exporter ou Copier le code.',
+    en: 'Direct file save is unavailable here. Use Export or Copy code.',
+  },
+  exportCopied: {
+    fr: 'Code des projets copie dans le presse-papiers.',
+    en: 'Project code copied to clipboard.',
+  },
+  exportFailed: {
+    fr: 'Export impossible depuis ce navigateur. Essaie le bouton Copier le code.',
+    en: 'Unable to export from this browser. Try the Copy code button.',
+  },
+  copyFailed: {
+    fr: 'Copie impossible depuis ce navigateur.',
+    en: 'Clipboard copy is not available in this browser.',
+  },
   localBadge: { fr: 'Projet local', en: 'Local project' },
   localNote: {
     fr: 'Ce projet est un brouillon local visible uniquement dans ce navigateur jusqu a ce que tu l integres au code.',
@@ -549,6 +582,7 @@ function renderWorkshopPanel(language, customCount) {
   const countLabel = customCount
     ? `<span class="project-workshop__count">${escapeHtml(projectsUiCopy.workshopCount[language](customCount))}</span>`
     : '';
+  const exportDisabled = customCount ? '' : ' disabled';
 
   return `
     <section class="project-workshop" data-reveal>
@@ -562,6 +596,18 @@ function renderWorkshopPanel(language, customCount) {
         <button class="project-workshop__button" type="button" data-project-workshop-open>
           ${escapeHtml(projectsUiCopy.addProject[language])}
         </button>
+        <button class="project-workshop__button project-workshop__button--secondary" type="button" data-project-export${exportDisabled}>
+          ${escapeHtml(projectsUiCopy.exportProjects[language])}
+        </button>
+        <button class="project-workshop__button project-workshop__button--secondary" type="button" data-project-save-file${exportDisabled}>
+          ${escapeHtml(projectsUiCopy.saveProjectsFile[language])}
+        </button>
+        <button class="project-workshop__button project-workshop__button--secondary" type="button" data-project-copy-export${exportDisabled}>
+          ${escapeHtml(projectsUiCopy.copyProjectsCode[language])}
+        </button>
+        <p class="project-workshop__status" data-project-export-status aria-live="polite">
+          ${customCount ? '' : escapeHtml(projectsUiCopy.noLocalProjects[language])}
+        </p>
       </div>
     </section>
   `;
@@ -888,6 +934,10 @@ export const renderProjectsPage = {
     const detail = root.querySelector('[data-project-detail]');
     const carousel = root.querySelector('[data-project-carousel]');
     const workshopOpenButton = root.querySelector('[data-project-workshop-open]');
+    const exportProjectsButton = root.querySelector('[data-project-export]');
+    const saveProjectsFileButton = root.querySelector('[data-project-save-file]');
+    const copyExportButton = root.querySelector('[data-project-copy-export]');
+    const exportStatus = root.querySelector('[data-project-export-status]');
     const modal = root.querySelector('[data-project-modal]');
     const form = root.querySelector('[data-project-form]');
     const status = root.querySelector('[data-project-form-status]');
@@ -1145,6 +1195,106 @@ export const renderProjectsPage = {
       if (status) status.textContent = '';
     };
 
+    const setExportStatus = (messageKey) => {
+      if (!exportStatus) return;
+      exportStatus.textContent = projectsUiCopy[messageKey]?.[language] ?? '';
+    };
+
+    const getStoredProjectsModule = () => {
+      const storedProjects = getStoredProjects();
+      return storedProjects.length ? exportStoredProjectsModule(storedProjects) : '';
+    };
+
+    const getProjectsDataModule = () => {
+      const storedProjects = getStoredProjects();
+      return storedProjects.length ? exportProjectsDataModule(storedProjects) : '';
+    };
+
+    const copyProjectExport = async () => {
+      const moduleSource = getStoredProjectsModule();
+      if (!moduleSource) {
+        setExportStatus('noLocalProjects');
+        return false;
+      }
+
+      try {
+        await navigator.clipboard.writeText(moduleSource);
+        setExportStatus('exportCopied');
+        return true;
+      } catch {
+        setExportStatus('copyFailed');
+        return false;
+      }
+    };
+
+    const saveProjectExport = async () => {
+      const moduleSource = getStoredProjectsModule();
+      if (!moduleSource) {
+        setExportStatus('noLocalProjects');
+        return;
+      }
+
+      if (!('showSaveFilePicker' in window)) {
+        await copyProjectExport();
+        return;
+      }
+
+      try {
+        const fileHandle = await window.showSaveFilePicker({
+          suggestedName: 'projects.local-export.js',
+          types: [
+            {
+              description: 'JavaScript module',
+              accept: {
+                'text/javascript': ['.js'],
+              },
+            },
+          ],
+        });
+        const writable = await fileHandle.createWritable();
+        await writable.write(moduleSource);
+        await writable.close();
+        setExportStatus('exportSaved');
+      } catch (error) {
+        if (error?.name === 'AbortError') return;
+        setExportStatus('exportFailed');
+      }
+    };
+
+    const saveProjectsFile = async () => {
+      const moduleSource = getProjectsDataModule();
+      if (!moduleSource) {
+        setExportStatus('noLocalProjects');
+        return;
+      }
+
+      if (!('showSaveFilePicker' in window)) {
+        setExportStatus('projectsFileSaveUnsupported');
+        return;
+      }
+
+      try {
+        const fileHandle = await window.showSaveFilePicker({
+          suggestedName: 'projects.js',
+          types: [
+            {
+              description: 'JavaScript module',
+              accept: {
+                'text/javascript': ['.js'],
+              },
+            },
+          ],
+        });
+        const writable = await fileHandle.createWritable();
+        await writable.write(moduleSource);
+        await writable.close();
+        setExportStatus('projectsFileSaved');
+      } catch (error) {
+        if (error?.name === 'AbortError') return;
+        setExportStatus('exportFailed');
+      }
+    };
+
     filterButtons.forEach((button) => {
       button.addEventListener('click', () => {
         activeFilter = button.dataset.projectFilter ?? 'all';
@@ -1232,6 +1382,9 @@ export const renderProjectsPage = {
     }
 
     workshopOpenButton?.addEventListener('click', () => openModal());
+    exportProjectsButton?.addEventListener('click', saveProjectExport);
+    saveProjectsFileButton?.addEventListener('click', saveProjectsFile);
+    copyExportButton?.addEventListener('click', copyProjectExport);
 
     modal?.addEventListener('click', (event) => {
       if (event.target === modal || event.target.closest('[data-project-modal-close]')) {

@@ -152,6 +152,31 @@ function serializeStoredProjects(projectList) {
   return projectList.map((project) => normalizeProjectRecord(project, { custom: true }));
 }
 
+function createExportProject(project) {
+  const normalized = normalizeProjectRecord(project, { custom: false });
+
+  return {
+    slug: normalized.slug,
+    year: normalized.year,
+    filter: normalized.filter,
+    filters: normalized.filters,
+    featured: normalized.featured,
+    spotlight: normalized.spotlight,
+    accent: normalized.accent,
+    title: normalized.title,
+    role: normalized.role,
+    roles: normalized.roles,
+    summary: normalized.summary,
+    description: normalized.description,
+    banner: normalized.banner,
+    support: normalized.support,
+    stack: normalized.stack,
+    outcomes: normalized.outcomes,
+    media: normalized.media,
+    links: normalized.links,
+  };
+}
+
 export function getStoredProjects() {
   const storage = getStorage('localStorage');
   if (!storage) return [];
@@ -174,6 +199,34 @@ export function setStoredProjects(projectList) {
   if (!storage) return;
 
   storage.setItem(PROJECTS_STORAGE_KEY, JSON.stringify(serializeStoredProjects(projectList)));
+}
+
+export function getExportableStoredProjects() {
+  return getStoredProjects().map(createExportProject);
+}
+
+export function exportStoredProjectsModule(projectList = getExportableStoredProjects()) {
+  const exportableProjects = projectList.map(createExportProject);
+  return [
+    '// Generated from the local portfolio project editor.',
+    '// Paste these records into src/data/projects.js, or import this module and merge the array.',
+    `export const exportedProjects = ${JSON.stringify(exportableProjects, null, 2)};`,
+    '',
+    'export default exportedProjects;',
+    '',
+  ].join('\n');
+}
+
+export function exportProjectsDataModule(projectList = getExportableStoredProjects()) {
+  const exportableProjects = projectList.map(createExportProject);
+  return [
+    '// Generated from the local portfolio project editor.',
+    '// This file can replace src/data/projects.js.',
+    `export const projectFilters = ${JSON.stringify(projectFilters, null, 2)};`,
+    '',
+    `export const projects = ${JSON.stringify(exportableProjects, null, 2)};`,
+    '',
+  ].join('\n');
 }
 
 function createUniqueSlug(baseSlug, existingSlugs) {
