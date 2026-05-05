@@ -1411,7 +1411,7 @@ textarea {
 }
 
 .project-spotlight {
-  padding: clamp(2rem, 5vw, 4rem) 0 1.25rem;
+  padding: clamp(1rem, 2.5vw, 2rem) 0 1.25rem;
 }
 
 .project-carousel {
@@ -2222,14 +2222,14 @@ textarea {
 
 .detail-card--project,
 .detail-card--skill {
-  --detail-card-max-height: calc(100svh - var(--header-height) - 2rem);
-  --detail-card-fade-height: 2.35rem;
-
   grid-column: 2;
   align-self: start;
   position: sticky;
   top: calc(var(--header-height) + 1rem);
-  max-height: var(--detail-card-max-height);
+}
+
+.detail-card--skill {
+  max-height: calc(100svh - var(--header-height) - 2rem);
   overflow: auto;
   scrollbar-width: none;
   -ms-overflow-style: none;
@@ -2237,33 +2237,12 @@ textarea {
 
 .detail-card--project {
   padding: 0;
-  overflow: hidden;
 }
 
 .detail-card__scroll {
-  max-height: var(--detail-card-max-height);
-  padding: 2.35rem 1.4rem 2.45rem;
-  overflow: auto;
-  -webkit-mask-image: linear-gradient(
-    180deg,
-    transparent 0,
-    #000 var(--detail-card-fade-height),
-    #000 calc(100% - var(--detail-card-fade-height)),
-    transparent 100%
-  );
-  mask-image: linear-gradient(
-    180deg,
-    transparent 0,
-    #000 var(--detail-card-fade-height),
-    #000 calc(100% - var(--detail-card-fade-height)),
-    transparent 100%
-  );
-  scrollbar-width: none;
-  -ms-overflow-style: none;
+  padding: 1.4rem;
 }
 
-.detail-card--project::-webkit-scrollbar,
-.detail-card__scroll::-webkit-scrollbar,
 .detail-card--skill::-webkit-scrollbar {
   width: 0;
   height: 0;
@@ -3674,13 +3653,6 @@ textarea {
   .detail-card--project {
     max-height: none;
     overflow: visible;
-  }
-
-  .detail-card--project .detail-card__scroll {
-    max-height: none;
-    overflow: visible;
-    -webkit-mask-image: none;
-    mask-image: none;
   }
 
   .detail-card--skill.detail-card--skill-overlay {
