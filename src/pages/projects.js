@@ -232,6 +232,10 @@ function getProjectBanner(project) {
   return project.banner || getProjectThumbnail(project);
 }
 
+function getImageSource(source) {
+  return String(source ?? '').replace('://imgur.com/', '://i.imgur.com/');
+}
+
 function getVideoEmbedUrl(rawUrl) {
   try {
     const url = new URL(rawUrl, window.location.href);
@@ -311,7 +315,8 @@ function getVideoThumbnailUrl(rawUrl) {
 }
 
 function getProjectMediaItems(project, language, kind = 'all') {
-  const imageItems = (project.media?.images ?? []).map((source, index) => ({
+  const imageSources = [...new Set([project.banner, ...(project.media?.images ?? [])].filter(Boolean).map(getImageSource))];
+  const imageItems = imageSources.map((source, index) => ({
     type: 'image',
     source,
     title: `${project.title[language]} ${projectsUiCopy.mediaImageLabel[language]} ${index + 1}`,
@@ -337,7 +342,7 @@ function getProjectMediaItems(project, language, kind = 'all') {
 }
 
 function renderProjectCard(project, language, index) {
-  const banner = getProjectBanner(project);
+  const banner = getImageSource(getProjectBanner(project));
   const initials = project.title[language].slice(0, 2).toUpperCase();
   const mediaStyle = banner
     ? ` style="--project-card-banner: url(&quot;${escapeHtml(escapeCssUrl(banner))}&quot;)"`
@@ -364,7 +369,8 @@ function renderProjectCard(project, language, index) {
       </button>
       <button class="project-card" type="button" data-project-card="${escapeHtml(project.slug)}">
         <span class="project-card__media" data-initials="${escapeHtml(initials)}" data-has-image="${banner ? 'true' : 'false'}"${mediaStyle}>
-          ${mediaMarkup}
+          ${banner ? `<img src="${escapeHtml(banner)}" alt="" loading="lazy" data-media-fallback />` : mediaMarkup}
+          <span class="project-card__media-fallback" aria-hidden="true">${escapeHtml(initials)}</span>
         </span>
         <span class="project-card__eyebrow">${escapeHtml(project.year)}</span>
         <strong class="project-card__title">${escapeHtml(project.title[language])}</strong>
@@ -432,7 +438,7 @@ function renderProjectMediaCarousel(mediaItems, kind, language) {
   const mediaMarkup = mediaItems
     .map((item, index) => {
       const previewMarkup = item.type === 'image'
-        ? `<img src="${escapeHtml(item.source)}" alt="${escapeHtml(item.title)}" loading="lazy" />`
+        ? `<img src="${escapeHtml(item.source)}" alt="${escapeHtml(item.title)}" loading="lazy" data-media-fallback />`
         : `
           ${
             item.thumbnailUrl
@@ -540,7 +546,8 @@ function renderProjectDetail(project, language) {
       </div>
       <h3>${escapeHtml(project.title[language])}</h3>
       <p class="detail-card__role">${escapeHtml(getProjectRoleLabels(project, language).join(' / '))}</p>
-      <p>${escapeHtml(project.description[language])}</p>
+      ${mediaMarkup}
+      <p class="detail-card__description">${escapeHtml(project.description[language])}</p>
       ${
         support
           ? `
@@ -561,7 +568,6 @@ function renderProjectDetail(project, language) {
           `
           : ''
       }
-      ${mediaMarkup}
       <div class="detail-card__footer">
         <p class="detail-card__footnote">${escapeHtml(footerNote)}</p>
         ${deleteAction}
@@ -1532,8 +1538,15 @@ export const renderProjectsPage = {
     syncCards();
     syncDetail();
 
+    const handleMediaError = (event) => {
+      if (!event.target.matches?.('[data-media-fallback]')) return;
+      event.target.closest('.project-card__media, .project-media')?.classList.add('has-error');
+    };
+    root.addEventListener('error', handleMediaError, true);
+
     return () => {
       document.removeEventListener('keydown', handleKeydown);
+      root.removeEventListener('error', handleMediaError, true);
     };
   },
 };
