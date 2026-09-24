@@ -19,6 +19,8 @@ import {
   skillCategories,
 } from '../data/skills.js';
 import { siteCopy } from '../data/site.js';
+import { projects } from '../data/projects.js';
+import '../styles/signal.css';
 
 const skillCategoryOrder = ['development', 'creativity', 'art'];
 const categoryButtonPositions = {
@@ -747,32 +749,97 @@ export const renderHomePage = {
     const storedCategories = loadSkillCategories();
     const orderedCategories = getOrderedSkillCategories(storedCategories);
     const initialCategory = orderedCategories[0] ?? storedCategories[0] ?? skillCategories[0];
+    const fieldProjects = ['calaveroll', 'echo-grove', 'go-duck-duck']
+      .map((slug) => projects.find((project) => project.slug === slug))
+      .filter(Boolean);
+    const projectTitle = (project) => t(project.title);
+    const projectRole = (project) => t(project.role);
+    const projectStack = (project) => project.stack.slice(0, 3).join(' · ');
+    const currentProject = fieldProjects[0];
+    const copy = language === 'fr'
+      ? {
+          availability: 'Portfolio · Gameplay',
+          location: 'Paris · ISART Digital',
+          discipline: 'Gameplay Programmer',
+          intro: 'Je transforme des intentions de jeu en systèmes jouables, lisibles et réactifs.',
+          projects: 'Voir les projets',
+          contact: 'Me contacter',
+          fieldLabel: 'Champ de signaux',
+          fieldHint: 'Choisir un projet',
+          proof: 'Projet sélectionné',
+          openProject: 'Explorer le portfolio',
+          fieldAria: 'Projets à explorer. Utilisez les flèches pour changer de projet.',
+          expertise: 'Unity · C# · Prototypage',
+          scroll: 'Défiler pour explorer',
+          skillTitle: 'Des systèmes qui se répondent',
+          skillIntro: 'Un aperçu interactif des domaines que je relie dans mon travail.',
+        }
+      : {
+          availability: 'Portfolio · Gameplay',
+          location: 'Paris · ISART Digital',
+          discipline: 'Gameplay Programmer',
+          intro: 'I turn gameplay ideas into playable, readable and responsive systems.',
+          projects: 'View projects',
+          contact: 'Get in touch',
+          fieldLabel: 'Signal field',
+          fieldHint: 'Select a project',
+          proof: 'Selected project',
+          openProject: 'Explore the portfolio',
+          fieldAria: 'Projects to explore. Use arrow keys to change project.',
+          expertise: 'Unity · C# · Prototyping',
+          scroll: 'Scroll to explore',
+          skillTitle: 'Systems in conversation',
+          skillIntro: 'An interactive view of the disciplines I connect in my work.',
+        };
 
     return `
-      <div class="home-snap-track">
-        <div class="home-trunk-bridge" aria-hidden="true">
-          ${renderTrunkBridge()}
-        </div>
-        <section class="hero-section hero-section--poster hero-intro home-snap-section" data-home-section>
-          <div class="hero-poster hero-poster--intro">
-            <div class="hero-canopy" data-reveal>
-              ${renderTreeVisual()}
+      <div class="signal-home">
+        <section class="signal-hero" aria-labelledby="signal-title">
+          <div class="signal-hero__copy" data-reveal>
+            <p class="signal-kicker"><span class="signal-kicker__dot" aria-hidden="true"></span>${copy.availability}</p>
+            <h1 id="signal-title">${t(siteCopy.home.title)}</h1>
+            <p class="signal-role">${copy.discipline}<span> / ${copy.expertise}</span></p>
+            <p class="signal-intro">${copy.intro}</p>
+            <div class="signal-actions">
+              <a class="signal-action signal-action--primary" href="projects/" data-nav-link="projects">${copy.projects}<span aria-hidden="true">↗</span></a>
+              <a class="signal-action signal-action--quiet" href="contact/" data-nav-link="contact">${copy.contact}<span aria-hidden="true">↗</span></a>
             </div>
-            <div class="hero-identity" data-reveal>
-              <h1 class="hero-title hero-title--poster">${t(siteCopy.home.title)}</h1>
-              <span class="hero-identity__rule" aria-hidden="true"></span>
-              <div class="hero-roles hero-roles--single">
-                <span>${t(siteCopy.home.role)}</span>
-              </div>
-            </div>
-            <div class="hero-actions hero-actions--bottom" data-reveal>
-              <a class="primary-link" href="#skills-hub" data-discover-tree>${t(siteCopy.common.discoverTree)}</a>
-            </div>
+            <div class="signal-meta"><span>${copy.location}</span><span>Unity / C#</span></div>
           </div>
+          <div class="signal-visual" data-reveal>
+            <div class="signal-visual__head"><span>${copy.fieldLabel}</span><span class="signal-visual__live"><i></i> 03 / ${String(fieldProjects.length).padStart(2, '0')}</span></div>
+            <div class="signal-canvas" data-signal-canvas role="group" aria-label="${copy.fieldAria}">
+              <svg class="signal-canvas__wires" viewBox="0 0 600 400" preserveAspectRatio="none" aria-hidden="true">
+                <path d="M70 205 C150 205 150 104 240 104 S340 205 420 205 S495 295 545 295" />
+                <path d="M70 205 C155 205 155 305 245 305 S330 205 420 205 S470 104 545 104" />
+                <path d="M240 104 C270 155 300 170 330 205 S260 255 245 305" />
+                <circle cx="70" cy="205" r="4" /><circle cx="240" cy="104" r="3" /><circle cx="245" cy="305" r="3" /><circle cx="420" cy="205" r="4" /><circle cx="545" cy="104" r="3" /><circle cx="545" cy="295" r="3" />
+              </svg>
+              <div class="signal-orbit signal-orbit--outer" aria-hidden="true"></div>
+              <div class="signal-orbit signal-orbit--inner" aria-hidden="true"></div>
+              <div class="signal-center"><span>NT</span><small>NATHAN<br />THEOPHILE</small></div>
+              ${fieldProjects.map((project, index) => `
+                <button class="signal-node signal-node--${index + 1}${index === 0 ? ' is-active' : ''}" type="button" data-signal-project="${project.slug}" aria-pressed="${index === 0}" aria-label="${projectTitle(project)} · ${projectRole(project)}">
+                  <span class="signal-node__pulse" aria-hidden="true"></span><span class="signal-node__label">${projectTitle(project)}</span>
+                </button>
+              `).join('')}
+              <span class="signal-coordinate signal-coordinate--top" aria-hidden="true">48°51′ N</span>
+              <span class="signal-coordinate signal-coordinate--bottom" aria-hidden="true">02°21′ E</span>
+            </div>
+            <div class="signal-project" aria-live="polite" aria-atomic="true" data-signal-detail>
+              <span class="signal-project__index"><span data-signal-index-current>01</span><i></i> 0${fieldProjects.length}</span>
+              <div class="signal-project__main"><span class="signal-project__label">${copy.proof}</span><strong data-signal-title>${projectTitle(currentProject)}</strong><span data-signal-role>${projectRole(currentProject)} · ${projectStack(currentProject)}</span></div>
+              <a href="projects/" data-nav-link="projects" aria-label="${copy.openProject}">↗</a>
+            </div>
+            <p class="signal-visual__hint">${copy.fieldHint}<span aria-hidden="true"> ↔</span></p>
+          </div>
+          <a class="signal-scroll" href="#skills-hub" data-discover-tree><span aria-hidden="true"></span>${copy.scroll}</a>
+          <span class="signal-index" aria-hidden="true">01 / 03</span>
         </section>
 
-        <section id="skills-hub" class="skills-screen section-shell home-snap-section" data-home-section>
+        <section id="skills-hub" class="skills-screen section-shell" aria-labelledby="signal-skills-title">
           <div class="skills-screen__inner">
+            <div class="signal-skills-heading"><p class="section-kicker">${copy.fieldLabel} / 02</p><h2 id="signal-skills-title">${copy.skillTitle}</h2><p>${copy.skillIntro}</p></div>
             <div class="skills-screen__controls" data-reveal>
               <div class="category-grid category-grid--compact">
                 ${renderCategoryButtons(t, storedCategories)}
@@ -793,12 +860,7 @@ export const renderHomePage = {
   enhance: ({ root, language }) => {
     const stage = root.querySelector('[data-skill-stage]');
     const triggerButtons = Array.from(root.querySelectorAll('[data-category-trigger]'));
-    const homeSections = Array.from(root.querySelectorAll('[data-home-section]'));
-    const homeSnapTrack = root.querySelector('.home-snap-track');
-    const heroVisual = root.querySelector('.hero-tree');
-    const heroIdentity = root.querySelector('.hero-identity');
-    const heroTitle = root.querySelector('.hero-title--poster');
-    const heroRoles = root.querySelector('.hero-roles--single');
+    const heroVisual = root.querySelector('.signal-visual');
     const pageContent = root.querySelector('.page-content');
     const skillsHub = root.querySelector('#skills-hub');
     const discoverButton = root.querySelector('[data-discover-tree]');
@@ -807,22 +869,6 @@ export const renderHomePage = {
     const cleanups = [];
     const addCleanup = (callback) => {
       if (typeof callback === 'function') cleanups.push(callback);
-    };
-
-    const syncHeroRoleSpacing = () => {
-      const roleLabel = heroRoles?.querySelector('span');
-      if (!heroTitle || !heroRoles || !roleLabel) return;
-
-      heroRoles.style.width = '';
-      heroRoles.style.setProperty('--hero-role-spacing', '0px');
-
-      const targetWidth = heroTitle.getBoundingClientRect().width * 0.94;
-      const naturalWidth = roleLabel.getBoundingClientRect().width;
-      const characterGaps = Math.max(roleLabel.textContent.trim().length - 1, 1);
-      const spacing = Math.max(0, (targetWidth - naturalWidth) / characterGaps);
-
-      heroRoles.style.width = `${Math.round(targetWidth)}px`;
-      heroRoles.style.setProperty('--hero-role-spacing', `${spacing.toFixed(2)}px`);
     };
 
     let categoriesState = loadSkillCategories();
@@ -879,7 +925,6 @@ export const renderHomePage = {
 
       syncSelectedNode();
 
-      homeSnapTrack?.style.setProperty('--home-bridge-accent', bridgeAccentColors[activeCategory.id] ?? '#2f9fbd');
       stage.innerHTML = renderSkillMap(activeCategory, language, {
         editorOpen,
         selectedNodeId,
@@ -1330,7 +1375,7 @@ export const renderHomePage = {
       }
     };
 
-    if (pageContent && homeSections.length > 1) {
+    if (pageContent && false) {
       let snapLock = false;
       let snapTimer = 0;
 
@@ -1381,7 +1426,7 @@ export const renderHomePage = {
       });
     }
 
-    if (homeSnapTrack && heroIdentity) {
+    if (false) {
       let trunkSyncTimerA = 0;
       let trunkSyncTimerB = 0;
       const bridge = root.querySelector('.home-trunk-bridge');
@@ -1452,13 +1497,51 @@ export const renderHomePage = {
       button.classList.toggle('is-active', index === 0);
       button.addEventListener('click', () => {
         renderCategory(button.dataset.categoryTrigger);
-        skillsHub?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        skillsHub?.scrollIntoView({
+          behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth',
+          block: 'start',
+        });
+      });
+    });
+
+    const signalNodes = Array.from(root.querySelectorAll('[data-signal-project]'));
+    const signalTitle = root.querySelector('[data-signal-title]');
+    const signalRole = root.querySelector('[data-signal-role]');
+    const signalIndexCurrent = root.querySelector('[data-signal-index-current]');
+    const fieldProjects = ['calaveroll', 'echo-grove', 'go-duck-duck']
+      .map((slug) => projects.find((project) => project.slug === slug))
+      .filter(Boolean);
+    const setSignalProject = (slug) => {
+      const project = fieldProjects.find((item) => item.slug === slug);
+      const index = fieldProjects.findIndex((item) => item.slug === slug);
+      if (!project || index < 0) return;
+      signalNodes.forEach((node) => {
+        const active = node.dataset.signalProject === slug;
+        node.classList.toggle('is-active', active);
+        node.setAttribute('aria-pressed', String(active));
+      });
+      if (signalTitle) signalTitle.textContent = project.title[language] ?? project.title.fr;
+      if (signalRole) signalRole.textContent = `${project.role[language] ?? project.role.fr} · ${project.stack.slice(0, 3).join(' · ')}`;
+      if (signalIndexCurrent) signalIndexCurrent.textContent = String(index + 1).padStart(2, '0');
+    };
+    signalNodes.forEach((node, index) => {
+      node.addEventListener('click', () => setSignalProject(node.dataset.signalProject));
+      node.addEventListener('keydown', (event) => {
+        if (event.key !== 'ArrowRight' && event.key !== 'ArrowDown' && event.key !== 'ArrowLeft' && event.key !== 'ArrowUp') return;
+        event.preventDefault();
+        const direction = event.key === 'ArrowRight' || event.key === 'ArrowDown' ? 1 : -1;
+        const nextNode = signalNodes[(index + direction + signalNodes.length) % signalNodes.length];
+        nextNode?.focus();
+        if (nextNode) setSignalProject(nextNode.dataset.signalProject);
       });
     });
 
     discoverButton?.addEventListener('click', (event) => {
       event.preventDefault();
-      skillsHub?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      skillsHub?.scrollIntoView({
+        behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth',
+        block: 'start',
+      });
     });
 
     stage.addEventListener('click', (event) => {
@@ -1561,10 +1644,10 @@ export const renderHomePage = {
     renderStage();
     hideTooltip();
 
-    if (heroVisual) {
+    if (heroVisual && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       const onHeroScroll = () => {
         const scrollTop = pageContent?.scrollTop ?? window.scrollY;
-        heroVisual.style.transform = `translateY(${Math.min(scrollTop * 0.03, 12)}px)`;
+        heroVisual.style.setProperty('--signal-scroll', `${Math.min(scrollTop * 0.008, 8)}px`);
       };
 
       const scrollTarget = pageContent ?? window;
