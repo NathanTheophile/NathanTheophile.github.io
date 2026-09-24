@@ -756,6 +756,7 @@ export const renderHomePage = {
     const projectRole = (project) => t(project.role);
     const projectStack = (project) => project.stack.slice(0, 3).join(' · ');
     const currentProject = fieldProjects[0];
+    const projectImage = (project) => project?.banner || project?.media?.images?.[0] || '';
     const copy = language === 'fr'
       ? {
           availability: 'Portfolio · Gameplay',
@@ -837,6 +838,25 @@ export const renderHomePage = {
           <span class="signal-index" aria-hidden="true">01 / 03</span>
         </section>
 
+        <section class="signal-reel section-shell" aria-label="${copy.projects}">
+          <div class="signal-reel__heading">
+            <p class="section-kicker">${copy.fieldLabel} / 01</p>
+            <h2>${copy.projects}</h2>
+          </div>
+          <div class="signal-reel__grid">
+            ${fieldProjects.map((project, index) => `
+              <a class="signal-reel__card" href="projects/" data-nav-link="projects" data-reveal>
+                <span class="signal-reel__image" data-image-frame>
+                  ${projectImage(project) ? `<img src="${escapeHtml(projectImage(project))}" alt="${escapeHtml(projectTitle(project))}" loading="${index ? 'lazy' : 'eager'}" data-project-image />` : ''}
+                  <span class="signal-image-fallback" aria-hidden="true">${escapeHtml(projectTitle(project))}</span>
+                </span>
+                <span class="signal-reel__meta">${escapeHtml(project.year)} · ${escapeHtml(projectRole(project))}</span>
+                <strong>${escapeHtml(projectTitle(project))}</strong>
+              </a>
+            `).join('')}
+          </div>
+        </section>
+
         <section id="skills-hub" class="skills-screen section-shell" aria-labelledby="signal-skills-title">
           <div class="skills-screen__inner">
             <div class="signal-skills-heading"><p class="section-kicker">${copy.fieldLabel} / 02</p><h2 id="signal-skills-title">${copy.skillTitle}</h2><p>${copy.skillIntro}</p></div>
@@ -870,6 +890,10 @@ export const renderHomePage = {
     const addCleanup = (callback) => {
       if (typeof callback === 'function') cleanups.push(callback);
     };
+
+    root.querySelectorAll('[data-project-image]').forEach((image) => {
+      image.addEventListener('error', () => image.closest('[data-image-frame]')?.classList.add('has-image-error'), { once: true });
+    });
 
     let categoriesState = loadSkillCategories();
     let orderedCategories = getOrderedSkillCategories(categoriesState);

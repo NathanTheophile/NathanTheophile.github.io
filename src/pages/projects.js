@@ -339,10 +339,6 @@ function getProjectMediaItems(project, language, kind = 'all') {
 function renderProjectCard(project, language, index) {
   const banner = getProjectBanner(project);
   const initials = project.title[language].slice(0, 2).toUpperCase();
-  const mediaStyle = banner
-    ? ` style="--project-card-banner: url(&quot;${escapeHtml(escapeCssUrl(banner))}&quot;)"`
-    : '';
-  const mediaMarkup = banner ? '' : `<span>${escapeHtml(initials)}</span>`;
   const roleSummary = getProjectRoleLabels(project, language).join(' / ');
 
   return `
@@ -363,8 +359,9 @@ function renderProjectCard(project, language, index) {
         </svg>
       </button>
       <button class="project-card" type="button" data-project-card="${escapeHtml(project.slug)}">
-        <span class="project-card__media" data-initials="${escapeHtml(initials)}" data-has-image="${banner ? 'true' : 'false'}"${mediaStyle}>
-          ${mediaMarkup}
+        <span class="project-card__media" data-image-frame data-initials="${escapeHtml(initials)}" data-has-image="${banner ? 'true' : 'false'}">
+          ${banner ? `<img src="${escapeHtml(banner)}" alt="${escapeHtml(project.title[language])}" loading="lazy" data-project-image />` : ''}
+          <span class="project-image-fallback" aria-hidden="true">${escapeHtml(initials)}</span>
         </span>
         <span class="project-card__eyebrow">${escapeHtml(project.year)}</span>
         <strong class="project-card__title">${escapeHtml(project.title[language])}</strong>
@@ -432,7 +429,7 @@ function renderProjectMediaCarousel(mediaItems, kind, language) {
   const mediaMarkup = mediaItems
     .map((item, index) => {
       const previewMarkup = item.type === 'image'
-        ? `<img src="${escapeHtml(item.source)}" alt="${escapeHtml(item.title)}" loading="lazy" />`
+        ? `<img src="${escapeHtml(item.source)}" alt="${escapeHtml(item.title)}" loading="lazy" data-project-image />`
         : `
           ${
             item.thumbnailUrl
@@ -457,7 +454,7 @@ function renderProjectMediaCarousel(mediaItems, kind, language) {
           )}"
           aria-hidden="${index === 0 ? 'false' : 'true'}"
         >
-          ${previewMarkup}
+          <span class="project-media__frame" data-image-frame>${previewMarkup}<span class="project-image-fallback" aria-hidden="true">${escapeHtml(item.label)}</span></span>
         </button>
       `;
     })
@@ -524,6 +521,7 @@ function renderProjectDetail(project, language) {
     .map((item) => `<span class="stack-pill">${escapeHtml(item)}</span>`)
     .join('');
   const mediaMarkup = renderProjectMedia(project, language);
+  const banner = getProjectBanner(project);
   const footerNote = siteCopy.projectsPage.emptyLinks[language];
   const deleteAction = project.isCustom
     ? `
@@ -534,13 +532,22 @@ function renderProjectDetail(project, language) {
     : '';
 
   return `
-    <div class="detail-card__scroll">
-      <div class="detail-card__header">
-        <span class="detail-card__eyebrow">${escapeHtml(project.year)}</span>
+    <div class="detail-card__scroll project-detail-editorial">
+      <div class="project-detail-editorial__hero" data-image-frame>
+        ${banner ? `<img src="${escapeHtml(banner)}" alt="${escapeHtml(project.title[language])}" data-project-image />` : ''}
+        <span class="project-image-fallback" aria-hidden="true">${escapeHtml(project.title[language])}</span>
+        <span class="project-detail-editorial__year">${escapeHtml(project.year)}</span>
       </div>
-      <h3>${escapeHtml(project.title[language])}</h3>
-      <p class="detail-card__role">${escapeHtml(getProjectRoleLabels(project, language).join(' / '))}</p>
-      <p>${escapeHtml(project.description[language])}</p>
+      <div class="project-detail-editorial__intro">
+        <p class="detail-card__eyebrow">${escapeHtml(projectsUiCopy.sectionContent[language])}</p>
+        <h3>${escapeHtml(project.title[language])}</h3>
+        <p class="detail-card__role">${escapeHtml(getProjectRoleLabels(project, language).join(' / '))}</p>
+        <p class="project-detail-editorial__summary">${escapeHtml(project.summary[language])}</p>
+      </div>
+      <div class="project-detail-editorial__context">
+        <span>${escapeHtml(language === 'fr' ? 'Contexte' : 'Context')}</span>
+        <p>${escapeHtml(project.description[language])}</p>
+      </div>
       ${
         support
           ? `
@@ -575,18 +582,18 @@ function renderProjectSpotlight(project, language, index, total) {
     .slice(0, 3)
     .map((item) => `<span class="project-carousel__stack-pill">${escapeHtml(item)}</span>`)
     .join('');
-  const thumbnail = getProjectThumbnail(project);
-  const backgroundStyle = thumbnail
-    ? ` style="--project-spotlight-image: url(&quot;${escapeHtml(escapeCssUrl(thumbnail))}&quot;)"`
-    : '';
+  const thumbnail = getProjectBanner(project);
 
   return `
     <article
       class="project-carousel__slide${index === 0 ? ' is-active' : ''}"
       data-project-slide="${index}"
       aria-hidden="${index === 0 ? 'false' : 'true'}"
-      ${backgroundStyle}
     >
+      <div class="project-carousel__image" data-image-frame>
+        ${thumbnail ? `<img src="${escapeHtml(thumbnail)}" alt="${escapeHtml(project.title[language])}" loading="${index ? 'lazy' : 'eager'}" data-project-image />` : ''}
+        <span class="project-image-fallback" aria-hidden="true">${escapeHtml(project.title[language])}</span>
+      </div>
       <div class="project-carousel__copy">
         <div class="project-carousel__panel project-carousel__panel--meta">
           <div class="project-carousel__meta">
@@ -851,11 +858,6 @@ export const renderProjectsPage = {
     const spotlightDots = spotlightProjects
       .map(
         (project, index) => {
-          const dotThumbnail = getProjectThumbnail(project);
-          const dotBackgroundStyle = dotThumbnail
-            ? ` style="--project-dot-image: url(&quot;${escapeHtml(escapeCssUrl(dotThumbnail))}&quot;)"`
-            : '';
-
           return `
           <button
             class="project-carousel__dot${index === 0 ? ' is-active' : ''}"
@@ -863,7 +865,6 @@ export const renderProjectsPage = {
             data-project-dot="${index}"
             aria-label="${language === 'fr' ? `Afficher ${project.title.fr}` : `Show ${project.title.en}`}"
             aria-pressed="${index === 0 ? 'true' : 'false'}"
-            ${dotBackgroundStyle}
           >
             <span class="project-carousel__dot-index">${String(index + 1).padStart(2, '0')}</span>
             <span class="project-carousel__dot-title">${escapeHtml(project.title[language])}</span>
@@ -951,6 +952,15 @@ export const renderProjectsPage = {
     const lightboxDots = root.querySelector('[data-project-lightbox-dots]');
     const lightboxCloseButton = root.querySelector('[data-project-lightbox-close]');
 
+    const bindImageFallbacks = (scope = root) => {
+      scope.querySelectorAll('[data-project-image]').forEach((image) => {
+        if (image.dataset.fallbackBound) return;
+        image.dataset.fallbackBound = 'true';
+        image.addEventListener('error', () => image.closest('[data-image-frame]')?.classList.add('has-image-error'), { once: true });
+      });
+    };
+    bindImageFallbacks();
+
     let activeFilters = { role: '', support: '', tool: '' };
     let activeSort = 'desc';
     let activeProject = getInitialProject(projectList);
@@ -1022,6 +1032,7 @@ export const renderProjectsPage = {
     const syncDetail = () => {
       if (!detail) return;
       detail.innerHTML = renderProjectDetail(activeProject, language);
+      bindImageFallbacks(detail);
       Array.from(detail.querySelectorAll('[data-project-media-carousel]')).forEach((carouselElement) => {
         syncDetailMediaCarousel(carouselElement, 0);
       });
