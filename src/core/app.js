@@ -230,6 +230,12 @@ export function mountApp({ routes, initialPageId }) {
       t: (value) => translateValue(value, currentLanguage),
     });
 
+    main.querySelectorAll('[data-nav-link]').forEach((link) => {
+      const targetPageId = link.dataset.navLink;
+      if (!targetPageId || !routeEntries[targetPageId]) return;
+      link.setAttribute('href', getHref(basePath, targetPageId));
+    });
+
     main.scrollTop = 0;
     main.scrollLeft = 0;
     currentRevealCleanup = setupRevealObserver(main);

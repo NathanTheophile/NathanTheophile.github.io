@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - main
+      - codex/design-signal-field
+      - codex/design-atlas
+      - codex/design-frame-by-frame
   workflow_dispatch:
 
 permissions:
@@ -19,8 +22,10 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout production source
         uses: actions/checkout@v4
+        with:
+          ref: main
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -28,11 +33,50 @@ jobs:
           node-version: 20
           cache: npm
 
-      - name: Install dependencies
+      - name: Install production dependencies
         run: npm ci
 
-      - name: Build site
+      - name: Build production site
         run: npm run build
+
+      - name: Checkout Signal Field
+        uses: actions/checkout@v4
+        with:
+          ref: codex/design-signal-field
+          path: .preview-build/signal-field
+
+      - name: Build Signal Field preview
+        working-directory: .preview-build/signal-field
+        run: npm ci && npm run build
+
+      - name: Add Signal Field preview
+        run: mkdir -p dist/previews/signal-field && cp -R .preview-build/signal-field/dist/. dist/previews/signal-field/
+
+      - name: Checkout Gameplay Atlas
+        uses: actions/checkout@v4
+        with:
+          ref: codex/design-atlas
+          path: .preview-build/gameplay-atlas
+
+      - name: Build Gameplay Atlas preview
+        working-directory: .preview-build/gameplay-atlas
+        run: npm ci && npm run build
+
+      - name: Add Gameplay Atlas preview
+        run: mkdir -p dist/previews/gameplay-atlas && cp -R .preview-build/gameplay-atlas/dist/. dist/previews/gameplay-atlas/
+
+      - name: Checkout Frame by Frame
+        uses: actions/checkout@v4
+        with:
+          ref: codex/design-frame-by-frame
+          path: .preview-build/frame-by-frame
+
+      - name: Build Frame by Frame preview
+        working-directory: .preview-build/frame-by-frame
+        run: npm ci && npm run build
+
+      - name: Add Frame by Frame preview
+        run: mkdir -p dist/previews/frame-by-frame && cp -R .preview-build/frame-by-frame/dist/. dist/previews/frame-by-frame/
 
       - name: Setup Pages
         uses: actions/configure-pages@v5

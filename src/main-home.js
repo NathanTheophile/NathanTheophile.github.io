@@ -1,6 +1,6 @@
 import { mountApp } from './core/app.js';
 import { renderContactPage } from './pages/contact.js';
-import { renderHomePage } from './pages/home.js';
+import { renderHomePage } from './pages/frame-by-frame.js';
 import { renderProjectsPage } from './pages/projects.js';
 
 mountApp({
