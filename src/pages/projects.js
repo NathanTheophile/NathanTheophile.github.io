@@ -224,12 +224,24 @@ function splitTextareaList(value, { allowComma = false } = {}) {
     .filter(Boolean);
 }
 
+function normalizeImageUrl(source) {
+  try {
+    const url = new URL(source, window.location.href);
+    if (url.hostname === 'imgur.com' && /^\/[A-Za-z0-9]+\.(png|jpe?g|gif|webp)$/i.test(url.pathname)) {
+      url.hostname = 'i.imgur.com';
+    }
+    return url.toString();
+  } catch {
+    return String(source ?? '');
+  }
+}
+
 function getProjectThumbnail(project) {
-  return project.media?.images?.[0] ?? '';
+  return normalizeImageUrl(project.media?.images?.[0] ?? '');
 }
 
 function getProjectBanner(project) {
-  return project.banner || getProjectThumbnail(project);
+  return normalizeImageUrl(project.banner) || getProjectThumbnail(project);
 }
 
 function getVideoEmbedUrl(rawUrl) {
@@ -339,10 +351,9 @@ function getProjectMediaItems(project, language, kind = 'all') {
 function renderProjectCard(project, language, index) {
   const banner = getProjectBanner(project);
   const initials = project.title[language].slice(0, 2).toUpperCase();
-  const mediaStyle = banner
-    ? ` style="--project-card-banner: url(&quot;${escapeHtml(escapeCssUrl(banner))}&quot;)"`
+  const mediaMarkup = banner
+    ? `<img src="${escapeHtml(banner)}" alt="" loading="lazy" data-project-image />`
     : '';
-  const mediaMarkup = banner ? '' : `<span>${escapeHtml(initials)}</span>`;
   const roleSummary = getProjectRoleLabels(project, language).join(' / ');
 
   return `
@@ -363,8 +374,8 @@ function renderProjectCard(project, language, index) {
         </svg>
       </button>
       <button class="project-card" type="button" data-project-card="${escapeHtml(project.slug)}">
-        <span class="project-card__media" data-initials="${escapeHtml(initials)}" data-has-image="${banner ? 'true' : 'false'}"${mediaStyle}>
-          ${mediaMarkup}
+        <span class="project-card__media" data-initials="${escapeHtml(initials)}" data-has-image="${banner ? 'true' : 'false'}">
+          ${mediaMarkup}<span class="project-card__media-fallback" ${banner ? 'hidden' : ''}>${escapeHtml(initials)}</span>
         </span>
         <span class="project-card__eyebrow">${escapeHtml(project.year)}</span>
         <strong class="project-card__title">${escapeHtml(project.title[language])}</strong>
@@ -523,6 +534,7 @@ function renderProjectDetail(project, language) {
   const support = getProjectSupportLabels(project, language)
     .map((item) => `<span class="stack-pill">${escapeHtml(item)}</span>`)
     .join('');
+  const banner = getProjectBanner(project);
   const mediaMarkup = renderProjectMedia(project, language);
   const footerNote = siteCopy.projectsPage.emptyLinks[language];
   const deleteAction = project.isCustom
@@ -535,12 +547,14 @@ function renderProjectDetail(project, language) {
 
   return `
     <div class="detail-card__scroll">
-      <div class="detail-card__header">
-        <span class="detail-card__eyebrow">${escapeHtml(project.year)}</span>
-      </div>
+      <div class="project-detail__hero">${banner ? `<img src="${escapeHtml(banner)}" alt="" data-project-image />` : ''}<span class="project-detail__hero-fallback" ${banner ? 'hidden' : ''}>${escapeHtml(project.title[language])}</span></div>
+      <div class="detail-card__header"><span class="detail-card__eyebrow">${escapeHtml(project.year)}</span></div>
       <h3>${escapeHtml(project.title[language])}</h3>
-      <p class="detail-card__role">${escapeHtml(getProjectRoleLabels(project, language).join(' / '))}</p>
-      <p>${escapeHtml(project.description[language])}</p>
+      <dl class="project-detail__brief">
+        <div><dt>${language === 'fr' ? 'Contexte' : 'Context'}</dt><dd>${escapeHtml(project.summary[language])}</dd></div>
+        <div><dt>${language === 'fr' ? 'Rôle' : 'Role'}</dt><dd>${escapeHtml(getProjectRoleLabels(project, language).join(' / '))}</dd></div>
+        <div><dt>${language === 'fr' ? 'Description' : 'Description'}</dt><dd>${escapeHtml(project.description[language])}</dd></div>
+      </dl>
       ${
         support
           ? `
@@ -575,18 +589,15 @@ function renderProjectSpotlight(project, language, index, total) {
     .slice(0, 3)
     .map((item) => `<span class="project-carousel__stack-pill">${escapeHtml(item)}</span>`)
     .join('');
-  const thumbnail = getProjectThumbnail(project);
-  const backgroundStyle = thumbnail
-    ? ` style="--project-spotlight-image: url(&quot;${escapeHtml(escapeCssUrl(thumbnail))}&quot;)"`
-    : '';
+  const thumbnail = getProjectBanner(project);
 
   return `
     <article
       class="project-carousel__slide${index === 0 ? ' is-active' : ''}"
       data-project-slide="${index}"
       aria-hidden="${index === 0 ? 'false' : 'true'}"
-      ${backgroundStyle}
     >
+      <div class="project-carousel__visual">${thumbnail ? `<img src="${escapeHtml(thumbnail)}" alt="" loading="${index === 0 ? 'eager' : 'lazy'}" data-project-image />` : ''}<span class="project-carousel__fallback" ${thumbnail ? 'hidden' : ''}>${escapeHtml(project.title[language])}</span></div>
       <div class="project-carousel__copy">
         <div class="project-carousel__panel project-carousel__panel--meta">
           <div class="project-carousel__meta">
@@ -874,8 +885,12 @@ export const renderProjectsPage = {
       .join('');
 
     return `
+      <section class="projects-atlas-header section-shell" data-reveal>
+        <p>${language === 'fr' ? 'Atlas des réalisations' : 'Work atlas'}</p>
+        <h1>${escapeHtml(t(siteCopy.projectsPage.title))}</h1>
+        <span>${language === 'fr' ? 'Chaque repère ouvre une fiche, une grande capture et sa galerie.' : 'Each landmark opens a record, a large capture and its gallery.'}</span>
+      </section>
       <section class="project-spotlight section-shell" data-reveal>
-        <h1 class="sr-only">${escapeHtml(t(siteCopy.projectsPage.title))}</h1>
         <div class="project-carousel" data-project-carousel>
           <div class="project-carousel__viewport">
             ${spotlightMarkup}
@@ -962,6 +977,14 @@ export const renderProjectsPage = {
     const cardShellsBySlug = new Map(
       cards.map((card) => [card.dataset.projectCard, card.closest('.project-card-shell')])
     );
+
+    root.addEventListener('error', (event) => {
+      const image = event.target.closest?.('[data-project-image]');
+      if (!image) return;
+      image.hidden = true;
+      const container = image.parentElement;
+      container?.querySelector('.project-card__media-fallback, .project-detail__hero-fallback, .project-carousel__fallback')?.removeAttribute('hidden');
+    }, true);
 
     const preservePageScroll = (callback) => {
       const previousScrollTop = pageRoot?.scrollTop;
