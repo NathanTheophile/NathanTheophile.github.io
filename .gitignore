@@ -1,5 +1,21 @@
+# Dependencies and build output
 node_modules/
 dist/
+
+# Vite and tool caches
+.vite/
+.vite-temp/
+.cache/
+*.tsbuildinfo
+
+# Generated test reports, coverage and visual checks
 test-results/
 playwright-report/
+blob-report/
+playwright/.cache/
+coverage/
+.nyc_output/
 .visual-check/
+
+# Local logs
+*.log

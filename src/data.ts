@@ -5,6 +5,7 @@ export type Item = {
   title: string;
   description: string;
   mark: string;
+  previewMedia?: { src: string; alt?: string };
   desktop: Placement;
   mobile: Placement;
 };

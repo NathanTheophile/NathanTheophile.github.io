@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import type { ButtonHTMLAttributes } from "react";
 import {
   identity,
   mobileProjects,
@@ -17,12 +18,46 @@ import {
 } from "./Artwork";
 
 type Detail = { title: string; description: string; category: string };
+type Preview = Detail & { id: string; dark: boolean; anchor: DOMRect; mark: string; media?: Item["previewMedia"] };
 
-function Arrow({ down = false }: { down?: boolean }) {
+function PreviewPanel({ preview }: { preview: Preview }) {
+  const panel = useRef<HTMLDivElement>(null);
+  const copy = useRef<HTMLDivElement>(null);
+  const [mediaSize, setMediaSize] = useState(150);
+  const [position, setPosition] = useState({ left: 16, top: 16 });
+  useLayoutEffect(() => {
+    setMediaSize(copy.current!.getBoundingClientRect().height);
+    const { width, height } = panel.current!.getBoundingClientRect();
+    const { anchor } = preview, gap = 16;
+    let left = anchor.right + gap;
+    let top = anchor.top + anchor.height / 2 - height / 2;
+    if (left + width > innerWidth - gap) left = anchor.left - width - gap;
+    if (left < gap) {
+      left = anchor.left + anchor.width / 2 - width / 2;
+      top = anchor.bottom + gap;
+      if (top + height > innerHeight - gap) top = anchor.top - height - gap;
+    }
+    setPosition({ left: Math.max(gap, Math.min(left, innerWidth-width-gap)),
+      top: Math.max(gap, Math.min(top, innerHeight-height-gap)) });
+  }, [preview, mediaSize]);
+  return <div ref={panel} id="node-preview" role="tooltip"
+    className={`preview-panel ${preview.dark ? "dark" : ""}`} style={position}>
+    <div className="preview-media" style={{ width: mediaSize }}>
+      {preview.media ? <img src={preview.media.src} alt={preview.media.alt ?? preview.title} />
+        : preview.dark ? <SkillIcon kind={preview.mark} /> : <Thumbnail kind={preview.mark} />}
+    </div>
+    <div className="preview-copy" ref={copy}>
+      <span className="section-label">{preview.category}</span>
+      <h2>{preview.title}</h2><p>{preview.description}</p>
+    </div>
+  </div>;
+}
+
+function Arrow({ down = false, up = false }: { down?: boolean; up?: boolean }) {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
       <path
-        d={down ? "M12 4v16m-7-7 7 7 7-7" : "M4 12h15m-6-6 6 6-6 6"}
+        d={up ? "M12 20V4m-7 7 7-7 7 7" : down ? "M12 4v16m-7-7 7 7 7-7" : "M4 12h15m-6-6 6 6-6 6"}
         fill="none"
         stroke="currentColor"
         strokeWidth="1.2"
@@ -35,14 +70,30 @@ function Node({
   item,
   mobile,
   dark,
-  open,
+  preview,
+  dismissPreview,
+  previewId,
 }: {
   item: Item;
   mobile: boolean;
   dark?: boolean;
-  open: (detail: Detail) => void;
+  preview: (detail: Preview) => void;
+  dismissPreview: (id: string) => void;
+  previewId?: string;
 }) {
   const p = mobile ? item.mobile : item.desktop;
+  const show = (button: HTMLButtonElement) => preview({ id: item.id, title: item.title,
+    description: item.description, category: dark ? "Tool & skill" : "Project",
+    dark: !!dark, anchor: button.getBoundingClientRect(), mark: item.mark, media: item.previewMedia });
+  const interactions: ButtonHTMLAttributes<HTMLButtonElement> = {
+    "aria-describedby": previewId === item.id ? "node-preview" : undefined,
+    onPointerEnter: (event) => { if (event.pointerType !== "touch") show(event.currentTarget); },
+    onPointerLeave: (event) => { if (event.pointerType !== "touch") dismissPreview(item.id); },
+    onFocus: (event) => { if (event.currentTarget.matches(":focus-visible")) show(event.currentTarget); },
+    onBlur: () => dismissPreview(item.id),
+    // Touch has no hover: keep a tap preview without opening a modal.
+    onClick: (event) => { if (window.matchMedia("(hover: none)").matches) show(event.currentTarget); },
+  };
   return (
     <g
       className={`node ${dark ? "skill-node" : "project-node"}`}
@@ -54,8 +105,11 @@ function Node({
         fill="none"
         stroke="currentColor"
       >
-        <circle cx={p.x} cy={p.y} r={p.r} strokeWidth={dark ? 1.5 : 0.65} />
+        <circle data-connection-ring={!dark || mobile ? "true" : undefined}
+          cx={p.x} cy={p.y} r={p.r} strokeWidth={dark ? 1.5 : 0.65} />
         <circle
+          data-outer-ring="true"
+          data-connection-ring={dark && !mobile ? "true" : undefined}
           cx={p.x}
           cy={p.y}
           r={p.r + (mobile ? 5 : 9)}
@@ -70,23 +124,6 @@ function Node({
               opacity=".6"
               strokeWidth=".75"
             />
-            <circle
-              cx={p.x}
-              cy={p.y - p.r - 2}
-              r="2.3"
-              fill="currentColor"
-              stroke="none"
-              opacity=".6"
-            />
-            <circle
-              cx={p.x - p.r - 1}
-              cy={p.y}
-              r="2.1"
-              fill="currentColor"
-              stroke="none"
-              opacity=".7"
-            />
-            <path d={`M${p.x} ${p.y + p.r}v${dark ? 13 : 26}`} opacity=".5" />
           </>
         )}
       </g>
@@ -99,13 +136,7 @@ function Node({
         <button
           className="node-image"
           aria-label={`Explore ${item.title}`}
-          onClick={() =>
-            open({
-              title: item.title,
-              description: item.description,
-              category: dark ? "Tool & skill" : "Project",
-            })
-          }
+          {...interactions}
         >
           {dark ? (
             <SkillIcon kind={item.mark} />
@@ -125,13 +156,7 @@ function Node({
           <p>{item.description}</p>
           <button
             className="node-action"
-            onClick={() =>
-              open({
-                title: item.title,
-                description: item.description,
-                category: dark ? "Tool & skill" : "Project",
-              })
-            }
+            {...interactions}
             aria-label={`Details about ${item.title}`}
           >
             <Arrow />
@@ -156,47 +181,16 @@ function Editorial({
       x={mobile ? 22 : 45}
       y={mobile ? (dark ? 50 : 122) : dark ? 72 : 136}
       width={mobile ? (dark ? 175 : 346) : dark ? 302 : 270}
-      height={mobile ? (dark ? 245 : 184) : dark ? 290 : 310}
+      height="110"
     >
       <div className="editorial">
-        <div className="section-label">
+        <div className="section-label" id={!dark ? "projects-title" : undefined}>
           <span>{dark ? "02" : "01"}</span>
           <i />
           {dark ? "TOOLS & SKILLS" : "PROJECTS"}
         </div>
-        {dark ? (
-          <h2>
-            Built on
-            <br className="desktop-break" /> a Solid System.
-          </h2>
-        ) : (
-          <h1 id="projects-title">
-            Ideas
-            <br className="desktop-break" /> in Motion.
-          </h1>
-        )}
-        <p>
-          {dark ? (
-            <>
-              Engines, tools, and technical skills
-              <br className="desktop-break" /> that power the work above.
-              <br className="desktop-break" /> A foundation for creating,
-              experimenting,
-              <br className="desktop-break" /> and shaping interactive
-              experiences.
-            </>
-          ) : (
-            <>
-              Real-time graphics, gameplay systems,
-              <br className="desktop-break" /> and interactive experiments.
-              <br className="desktop-break" /> A selection of recent work
-              exploring
-              <br className="desktop-break" /> play, tech, and visual systems.
-            </>
-          )}
-        </p>
         <button className="outline-cta" onClick={onExplore}>
-          {dark ? "EXPLORE TOOLS" : "EXPLORE PROJECTS"}
+          {dark ? "MORE TOOLS" : "MORE PROJECTS"}
           <Arrow />
         </button>
       </div>
@@ -284,14 +278,17 @@ function Header({
   );
 }
 
-function Index({ go }: { go: (page: number) => void }) {
+function Index({ go, dark = false, mobile = false }: {
+  go: (page: number) => void; dark?: boolean; mobile?: boolean;
+}) {
   return (
-    <foreignObject x="45" y="700" width="225" height="110">
+    <foreignObject x={dark ? (mobile ? 230 : 849) : 45}
+      y={dark ? (mobile ? 122 : 69) : 700} width={dark ? 145 : 225} height="122">
       <nav className="section-index" aria-label="Section navigation">
-        <button className="selected" onClick={() => go(0)}>
+        <button className={!dark ? "selected" : undefined} aria-current={!dark ? "page" : undefined} onClick={() => go(0)}>
           <span>01</span>PROJECTS
         </button>
-        <button onClick={() => go(1)}>
+        <button className={dark ? "selected" : undefined} aria-current={dark ? "page" : undefined} onClick={() => go(1)}>
           <span>02</span>TOOLS & SKILLS
         </button>
         <span className="index-note">
@@ -303,6 +300,48 @@ function Index({ go }: { go: (page: number) => void }) {
       </nav>
     </foreignObject>
   );
+}
+
+function Catalog({ dark = false, open }: { dark?: boolean; open: (detail: Detail) => void }) {
+  const items = dark ? skills : projects;
+  return (
+    <section id={dark ? "tools-grid" : "projects-grid"}
+      className={`screen catalog ${dark ? "skills" : "projects"}`}
+      aria-labelledby={dark ? "tools-grid-title" : "projects-grid-title"}>
+      <div className="catalog-stage">
+        <header className="catalog-header">
+          <div>
+            <div className="section-label"><span>{dark ? "04" : "03"}</span><i />{dark ? "SKILLS & TOOLS" : "PROJECTS"}</div>
+            <h2 id={dark ? "tools-grid-title" : "projects-grid-title"}>{dark ? "All skills & tools" : "All projects"}</h2>
+          </div>
+          <span className="catalog-count">{String(items.length).padStart(2, "0")} {dark ? "TOOLS & SKILLS" : "PROJECTS"}</span>
+        </header>
+        <div className="catalog-scroll" tabIndex={0} role="region" aria-label={dark ? "Skills and tools grid" : "Project grid"}>
+          <div className="catalog-grid">
+            {items.map((item) => (
+              <button className="catalog-card" key={item.id}
+                onClick={() => open({ title: item.title, description: item.description, category: dark ? "Tool & skill" : "Project" })}>
+                <span className="catalog-media" aria-hidden="true">
+                  {item.previewMedia ? <img src={item.previewMedia.src} alt="" />
+                    : dark ? <SkillIcon kind={item.mark} /> : <Thumbnail kind={item.mark} cover />}
+                </span>
+                <span className="catalog-copy"><strong>{item.title}</strong><span>{item.description}</span></span>
+                <Arrow />
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// Catalogs can overflow on small screens. Read their content before moving
+// to the neighboring full-screen page when a gesture reaches an edge.
+function canScroll(element: HTMLElement | null, delta: number) {
+  return !!element && (delta > 0
+    ? element.scrollTop < element.scrollHeight - element.clientHeight - 1
+    : element.scrollTop > 1);
 }
 
 export default function App() {
@@ -320,15 +359,18 @@ export default function App() {
   const projectItems = mobile ? mobileProjects(mobileHeight) : projects;
   const skillItems = mobile ? mobileSkills(mobileHeight) : skills;
   const [detail, setDetail] = useState<Detail | null>(null);
+  const [preview, setPreview] = useState<Preview | null>(null);
+  const dismissPreview = (id: string) => setPreview((current) => current?.id === id ? null : current);
   const locked = useRef(false);
   const unlockTimer = useRef<ReturnType<typeof setTimeout> | undefined>(
     undefined,
   );
-  const swipe = useRef<{ y: number; x: number; page: number } | null>(null);
+  const swipe = useRef<{ y: number; x: number; page: number; scrollTop: number; scrollMax: number } | null>(null);
   const go = useCallback((page: number) => {
+    setPreview(null);
     const element = scroller.current;
     if (!element) return;
-    const target = Math.max(0, Math.min(1, page));
+    const target = Math.max(0, Math.min(3, page));
     locked.current = true;
     clearTimeout(unlockTimer.current);
     element.scrollTo({
@@ -341,7 +383,7 @@ export default function App() {
       locked.current = false;
     }, 750);
   }, []);
-  const open = (content: Detail) => setDetail(content);
+  const open = (content: Detail) => { setPreview(null); setDetail(content); };
 
   useEffect(() => {
     if (detail) dialog.current?.showModal();
@@ -357,6 +399,8 @@ export default function App() {
         event.ctrlKey
       )
         return;
+      const catalog = (event.target as Element).closest<HTMLElement>(".catalog-scroll");
+      if (canScroll(catalog, event.deltaY)) return;
       event.preventDefault();
       if (locked.current) return;
       if (
@@ -374,6 +418,7 @@ export default function App() {
       accumulated = 0;
     };
     const key = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setPreview(null);
       if (
         dialog.current?.open ||
         (event.target instanceof HTMLElement &&
@@ -387,7 +432,7 @@ export default function App() {
         ArrowUp: current - 1,
         PageUp: current - 1,
         Home: 0,
-        End: 1,
+        End: 3,
       };
       if (event.key === " " && event.target === document.body)
         pages[" "] = event.shiftKey ? current - 1 : current + 1;
@@ -397,6 +442,7 @@ export default function App() {
       }
     };
     const resize = () => {
+      setPreview(null);
       setViewport({ width: window.innerWidth, height: window.innerHeight });
       element.scrollTo({
         top: activePage.current * element.clientHeight,
@@ -404,10 +450,15 @@ export default function App() {
       });
     };
     element.addEventListener("wheel", wheel, { passive: false });
+    const outsidePreview = (event: globalThis.PointerEvent) => {
+      if (!(event.target as Element).closest(".node-image,.node-action")) setPreview(null);
+    };
+    window.addEventListener("pointerdown", outsidePreview);
     window.addEventListener("keydown", key);
     window.addEventListener("resize", resize);
     return () => {
       element.removeEventListener("wheel", wheel);
+      window.removeEventListener("pointerdown", outsidePreview);
       window.removeEventListener("keydown", key);
       window.removeEventListener("resize", resize);
       clearTimeout(unlockTimer.current);
@@ -424,6 +475,7 @@ export default function App() {
         className="viewport-scroller"
         tabIndex={-1}
         onScroll={(event) => {
+          setPreview(null);
           const page = Math.round(
             event.currentTarget.scrollTop / event.currentTarget.clientHeight,
           );
@@ -432,7 +484,10 @@ export default function App() {
         }}
         onTouchStart={(event) => {
           const t = event.touches[0]!;
-          swipe.current = { x: t.clientX, y: t.clientY, page: active };
+          const catalog = (event.target as Element).closest<HTMLElement>(".catalog-scroll");
+          swipe.current = { x: t.clientX, y: t.clientY, page: active,
+            scrollTop: catalog?.scrollTop ?? 0,
+            scrollMax: catalog ? catalog.scrollHeight - catalog.clientHeight : 0 };
         }}
         onTouchEnd={(event) => {
           const start = swipe.current,
@@ -443,7 +498,8 @@ export default function App() {
             Math.abs(start.y - t.clientY) > 35 &&
             Math.abs(start.y - t.clientY) > Math.abs(start.x - t.clientX)
           )
-            go(start.page + (start.y > t.clientY ? 1 : -1));
+            if (start.y > t.clientY ? start.scrollTop >= start.scrollMax - 1 : start.scrollTop <= 1)
+              go(start.page + (start.y > t.clientY ? 1 : -1));
           swipe.current = null;
         }}
       >
@@ -498,14 +554,7 @@ export default function App() {
                 <Editorial
                   dark={dark}
                   mobile={mobile}
-                  onExplore={() => {
-                    const item = (dark ? skillItems : projectItems)[0]!;
-                    open({
-                      title: item.title,
-                      description: item.description,
-                      category: dark ? "Tool & skill" : "Project",
-                    });
-                  }}
+                  onExplore={() => go(dark ? 3 : 2)}
                 />
                 {(dark ? skillItems : projectItems).map((item) => (
                   <Node
@@ -513,76 +562,34 @@ export default function App() {
                     item={item}
                     mobile={mobile}
                     dark={dark}
-                    open={open}
+                    preview={setPreview}
+                    dismissPreview={dismissPreview}
+                    previewId={preview?.id}
                   />
                 ))}
-                {!mobile && (
-                  <>
-                    {!dark && <Index go={go} />}
-                    <foreignObject
-                      x="849"
-                      y={dark ? 69 : 715}
-                      width="145"
-                      height="122"
-                    >
-                      <div className="disciplines">
-                        {(dark
-                          ? [
-                              "ENGINES",
-                              "PROGRAMMING",
-                              "GRAPHICS",
-                              "TOOLS",
-                              "WORKFLOW",
-                              "AND MORE",
-                            ]
-                          : [
-                              "GAMES",
-                              "REAL-TIME GRAPHICS",
-                              "INTERACTIVE SYSTEMS",
-                              "TECHNICAL ART",
-                            ]
-                        ).map((s) => (
-                          <span key={s}>{s}</span>
-                        ))}
-                        <i />
-                      </div>
-                    </foreignObject>
-                  </>
-                )}
-                {!dark && (
+                {(!mobile || dark) && <Index go={go} dark={dark} mobile={mobile} />}
+                {(
                   <foreignObject
                     x={(mobile ? MOBILE_TRUNK_X : TRUNK_X) - (mobile ? 23 : 35)}
-                    y={mobile ? mobileHeight - 62 : 797}
+                    y={dark ? (mobile ? 10 : 22) : mobile ? mobileHeight - 62 : 797}
                     width={mobile ? 150 : 176}
                     height={mobile ? 60 : 70}
                   >
                     <button
-                      className="scroll-control"
-                      onClick={() => go(1)}
-                      aria-label="Scroll to tools and skills"
+                      className={`scroll-control ${dark ? "return-control" : ""}`}
+                      onClick={() => go(dark ? 0 : 1)}
+                      aria-label={dark ? "Scroll back to projects" : "Scroll to tools and skills"}
                     >
                       <span className="scroll-circle">
-                        <Arrow down />
+                        <Arrow down={!dark} up={dark} />
                       </span>
                       {(!mobile || mobileHeight >= 844) && (
                         <span className="scroll-caption">
-                          SCROLL
+                          {dark ? "BACK" : "SCROLL"}
                           <br />
-                          TO EXPLORE
+                          {dark ? "TO PROJECTS" : "TO EXPLORE"}
                         </span>
                       )}
-                    </button>
-                  </foreignObject>
-                )}
-                {dark && (
-                  <foreignObject
-                    x={mobile ? 245 : 849}
-                    y={mobile ? mobileHeight - 49 : 826}
-                    width={mobile ? 130 : 145}
-                    height="44"
-                  >
-                    <button className="back-control" onClick={() => go(0)}>
-                      ↑ BACK TO PROJECTS
                     </button>
                   </foreignObject>
                 )}
@@ -590,7 +597,10 @@ export default function App() {
             </div>
           </section>
         ))}
+        <Catalog open={open} />
+        <Catalog dark open={open} />
       </main>
+      {preview && <PreviewPanel preview={preview} />}
       <dialog
         ref={dialog}
         className="detail-dialog"

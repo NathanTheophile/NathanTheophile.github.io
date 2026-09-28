@@ -1,52 +1,88 @@
-import type { Item, Placement, Point } from "./data";
+import { useEffect, useState } from "react";
+import type { Item } from "./data";
+import { rootTraces, treeTraces, tracePath } from "./branchGeometry";
+import type { Trace } from "./branchGeometry";
+import treeOutline from "./artwork/tree-network.svg?url";
+import rootOutline from "./artwork/root-network.svg?url";
+export { TRUNK_X, MOBILE_TRUNK_X } from "./branchGeometry";
 
-export const TRUNK_X = 505;
-export const MOBILE_TRUNK_X = 197;
-type Curve = { from: Point; c1: Point; c2: Point; stem?: string };
-type RootRoute = { stem: string; c1: Point; c2: Point };
-
-export function edge(node: Placement, incoming: Point): Point {
-  const dx = incoming.x - node.x,
-    dy = incoming.y - node.y;
-  const length = Math.hypot(dx, dy);
-  return {
-    x: node.x + (dx / length) * node.r,
-    y: node.y + (dy / length) * node.r,
-  };
+function ReferenceNetwork({ items, dark }: { items: Item[]; dark: boolean }) {
+  const prefix = dark ? "roots" : "tree";
+  const [outline, setOutline] = useState("");
+  useEffect(() => {
+    let active = true;
+    fetch(dark ? rootOutline : treeOutline).then((response) => response.text()).then((source) => {
+      if (active) setOutline(source.replace(/<svg[^>]*>/, "").replace(/<\/svg>/, "")
+        .replace('<path data-outline-layer=', `<path id="${prefix}-reference-base" data-outline-layer=`));
+    });
+    return () => { active = false; };
+  }, [dark, prefix]);
+  if (!outline) return null;
+  // Projects reach the intermediate ring; roots retain the outer-ring contact.
+  const holes = items.map(({ desktop: node }) => {
+    const r = node.r + (dark ? 9 : 0);
+    return `M${node.x-r} ${node.y}a${r} ${r} 0 1 0 ${2*r} 0a${r} ${r} 0 1 0 ${-2*r} 0Z`;
+  }).join("");
+  return <g fill="currentColor" data-reference-network={prefix}>
+    <defs>
+      <clipPath id={`${prefix}-outside-rings`} clipPathUnits="userSpaceOnUse">
+        <path clipRule="evenodd" d={`M0 0H1000V870H0Z${holes}`} />
+      </clipPath>
+    </defs>
+    <g clipPath={`url(#${prefix}-outside-rings)`}
+      dangerouslySetInnerHTML={{ __html: outline }} />
+  </g>;
 }
-export function curvePath(curve: Curve, node: Placement) {
-  const to = edge(node, curve.c2);
-  return `${curve.stem ?? `M${curve.from.x},${curve.from.y}`} C${curve.c1.x},${curve.c1.y} ${curve.c2.x},${curve.c2.y} ${to.x},${to.y}`;
-}
 
-const branches: Record<string, Curve> = {
-  recent: {
-    from: { x: 526, y: 382 },
-    c1: { x: 595, y: 279 },
-    c2: { x: 514, y: 274 },
-  },
-  prototype: {
-    from: { x: 526, y: 403 },
-    c1: { x: 526, y: 281 },
-    c2: { x: 433, y: 325 },
-  },
-  gameplay: {
-    from: { x: 508, y: 575 },
-    stem: "M508 575C522 551 550 540 571 515C579 503 574 489 574 471C574 449 628 430 646 408C659 391 658 363 658 347",
-    c1: { x: 658, y: 328 },
-    c2: { x: 677, y: 321 },
-  },
-  shader: {
-    from: { x: 505, y: 669 },
-    c1: { x: 501, y: 528 },
-    c2: { x: 335, y: 562 },
-  },
-  featured: {
-    from: { x: 505, y: 699 },
-    c1: { x: 531, y: 653 },
-    c2: { x: 627, y: 566 },
-  },
-};
+function Network({ traces, prefix }: { traces: Trace[]; prefix: string }) {
+  return (
+    <g
+      fill="none"
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      {traces.map((trace) => (
+        <path
+          key={trace.id}
+          id={`${prefix}-${trace.id}`}
+          className={trace.id === "trunk" ? "main-trunk" : undefined}
+          data-structural={trace.id}
+          data-parent={
+            trace.parent ? `${prefix}-${trace.parent.id}` : undefined
+          }
+          data-branch={
+            prefix === "tree" && !trace.secondary ? trace.nodeId : undefined
+          }
+          data-root={
+            prefix === "roots" && !trace.secondary ? trace.nodeId : undefined
+          }
+          data-secondary={trace.secondary ? "true" : undefined}
+          d={tracePath(trace)}
+          strokeWidth={trace.width}
+          opacity={trace.opacity}
+        />
+      ))}
+      {traces
+        .filter((trace) => trace.secondary)
+        .map((trace) => {
+          const from = trace.segments[0]!.from,
+            to = trace.segments.at(-1)!.to;
+          return (
+            <g
+              key={`${trace.id}-marks`}
+              fill="currentColor"
+              stroke="none"
+              opacity={trace.opacity * 0.8}
+            >
+              <circle cx={from.x} cy={from.y} r="1.3" />
+              <circle cx={to.x} cy={to.y} r={trace.width > 1 ? 2 : 1.7} />
+            </g>
+          );
+        })}
+    </g>
+  );
+}
 
 export function TreeGraphic({
   items,
@@ -57,167 +93,13 @@ export function TreeGraphic({
   mobile: boolean;
   height?: number;
 }) {
-  const x = mobile ? MOBILE_TRUNK_X : TRUNK_X;
   return (
     <g className="tree-art" aria-hidden="true">
-      {!mobile && <Construction dark={false} />}
-      <g
-        className="secondary-branches"
-        fill="none"
-        stroke="currentColor"
-        strokeLinecap="round"
-      >
-        {!mobile && (
-          <>
-            <path d="M510 870V688C510 650 574 641 585 626L614 602H661L687 578" />
-            <path d="M488 870V719L473 697V656M498 805V669L495 615M519 803V732L536 712V667" />
-            <path d="M546 531V493L593 482H628L646 462M574 482L579 456M628 482L643 477" />
-            <path d="M571 493C571 455 649 427 658 389V345L681 316M615 433H644L659 419M658 396L688 388 709 369 722 369 740 346" />
-            <path
-              d="M450 606L415 596 401 581M471 626L450 603 418 601 403 580"
-              strokeWidth="2.2"
-            />
-            <path d="M407 569V538L389 513 386 489 355 460 348 451M407 538L431 511 450 496M431 511V493L447 483" />
-            <path d="M526 403L508 374V354M508 374L490 358 482 340M526 369V336L505 319M553 321L570 308V281L590 271 604 270M570 281L588 251" />
-            <path d="M458 318L417 311 401 301M442 311L431 300M375 556H353L340 546 329 538M585 626L580 610 573 603M516 740V711L536 684" />
-          </>
-        )}
-        {mobile && height >= 780 && (
-          <path
-            d={`M${x - 4} ${height}V679L177 657V560M${x + 5} ${height}V601L218 578V537M${x - 4} 511L174 489V470M${x + 4} 408L218 386V370`}
-          />
-        )}
-      </g>
-      <path
-        className="main-trunk"
-        d={
-          mobile
-            ? `M${x} ${height}V292`
-            : "M505 870V669C505 625 506 602 508 575C512 554 551 535 553 503V460C553 435 539 430 526 412V382"
-        }
-        fill="none"
-        stroke="currentColor"
-        strokeWidth={mobile ? 2.6 : 3.3}
-      />
-      <g fill="none" stroke="currentColor" strokeLinecap="round">
-        {items.map((item) => {
-          const node = mobile ? item.mobile : item.desktop;
-          const branch = mobile
-            ? {
-                from: { x, y: Math.min(node.y + 95, height - 8) },
-                c1: { x, y: node.y + 36 },
-                c2: {
-                  x: node.x < x ? node.x + 60 : node.x - 60,
-                  y: node.y + 36,
-                },
-              }
-            : branches[item.id]!;
-          return (
-            <path
-              key={item.id}
-              data-branch={item.id}
-              d={curvePath(branch, node)}
-              strokeWidth={mobile ? 1.4 : 1.9}
-            />
-          );
-        })}
-      </g>
-      {!mobile && (
-        <g fill="currentColor">
-          {[
-            [505, 658],
-            [473, 714],
-            [508, 674],
-            [579, 574],
-            [628, 480],
-            [646, 462],
-            [591, 361],
-            [608, 251],
-            [450, 496],
-            [389, 513],
-            [349, 451],
-            [681, 316],
-            [661, 602],
-            [536, 712],
-            [483, 429],
-            [406, 618],
-            [329, 534],
-            [456, 234],
-            [350, 452],
-            [430, 496],
-            [545, 581],
-          ].map(([cx, cy], i) => (
-            <circle
-              key={i}
-              cx={cx}
-              cy={cy}
-              r={i % 4 === 0 ? 2.8 : 1.6}
-              opacity={i % 3 === 0 ? 1 : 0.65}
-            />
-          ))}
-        </g>
-      )}
+      {mobile ? <Network traces={treeTraces(items, true, height)} prefix="tree" />
+        : <ReferenceNetwork items={items} dark={false} />}
     </g>
   );
 }
-
-const rootRoutes: Record<string, RootRoute> = {
-  unity: {
-    stem: "M492 0V133C492 173 461 182 433 218C405 249 404 267 399 287C392 325 320 315 285 333C260 346 271 379 229 383L189 383",
-    c1: { x: 145, y: 383 },
-    c2: { x: 110, y: 401 },
-  },
-  unreal: {
-    stem: "M501 0V194C501 230 487 257 462 283C441 304 453 336 430 356C412 373 385 372 376 388",
-    c1: { x: 363, y: 398 },
-    c2: { x: 355, y: 395 },
-  },
-  glsl: {
-    stem: "M516 0V124C516 173 536 183 555 199C598 233 621 248 638 276C655 296 681 301 696 319",
-    c1: { x: 714, y: 332 },
-    c2: { x: 704, y: 336 },
-  },
-  csharp: {
-    stem: "M495 0V165C495 192 409 221 415 267V310C415 351 378 374 348 392C330 407 330 430 330 469V497C330 536 250 539 229 548",
-    c1: { x: 190, y: 560 },
-    c2: { x: 123, y: 535 },
-  },
-  cpp: {
-    stem: "M506 0V264C506 305 564 340 580 370V440C580 477 507 493 482 511C459 529 460 550 438 550",
-    c1: { x: 414, y: 550 },
-    c2: { x: 405, y: 581 },
-  },
-  hlsl: {
-    stem: "M511 0V206C511 260 552 286 575 324C591 349 589 380 590 414V445C590 475 618 491 643 496",
-    c1: { x: 657, y: 497 },
-    c2: { x: 655, y: 504 },
-  },
-  git: {
-    stem: "M519 0V181C526 214 570 241 597 270C639 320 661 338 693 335C714 336 742 333 746 348V453C746 475 803 466 824 489C852 509 873 510 873 541V564",
-    c1: { x: 873, y: 576 },
-    c2: { x: 842, y: 575 },
-  },
-  webgl: {
-    stem: "M496 0V244C496 294 449 313 450 351C451 377 390 381 390 407V490C390 514 335 512 335 545C335 585 313 610 282 644C266 666 239 665 218 678",
-    c1: { x: 198, y: 689 },
-    c2: { x: 170, y: 688 },
-  },
-  tools: {
-    stem: "M508 0V279C508 320 563 344 603 382V457C603 488 613 509 613 540V576C613 616 566 654 534 681C508 704 454 691 435 704",
-    c1: { x: 416, y: 718 },
-    c2: { x: 400, y: 717 },
-  },
-  workflow: {
-    stem: "M511 0V292C511 340 558 359 568 394C579 434 607 451 608 505V582C609 612 585 627 591 649",
-    c1: { x: 593, y: 667 },
-    c2: { x: 616, y: 671 },
-  },
-  experiments: {
-    stem: "M516 0V291C516 348 560 350 580 388C600 426 634 433 653 462C676 485 694 491 694 514V578C694 606 742 613 795 625C838 640 859 665 859 700",
-    c1: { x: 859, y: 734 },
-    c2: { x: 841, y: 736 },
-  },
-};
 
 export function RootsGraphic({
   items,
@@ -226,161 +108,18 @@ export function RootsGraphic({
   items: Item[];
   mobile: boolean;
 }) {
-  const x = mobile ? MOBILE_TRUNK_X : TRUNK_X;
   return (
     <g className="root-art" aria-hidden="true">
-      {!mobile && (
-        <g clipPath="url(#root-label-clearance)">
-          <Construction dark />
-        </g>
-      )}
-      <g fill="none" stroke="currentColor" strokeLinecap="round">
-        {[-13, -8, -4, 0, 4, 8, 13].map((offset, i) => (
-          <path
-            key={offset}
-            className="root-bundle"
-            opacity={i % 2 ? 0.45 : 0.9}
-            strokeWidth={i === 3 ? 1.8 : 0.8}
-            d={`M${x + offset} 0V${mobile ? 225 : 105 + i * 14} Q${x + offset} ${mobile ? 246 : 150 + i * 12} ${x + offset * 2} ${mobile ? 263 : 182 + i * 15}`}
-          />
-        ))}
-        {items.map((item, i) => {
-          const node = mobile ? item.mobile : item.desktop;
-          const route: RootRoute = mobile
-            ? {
-                stem: `M${x + ((i % 3) - 1) * 5} 248V${node.y - node.r - 12}`,
-                c1: { x, y: node.y - node.r },
-                c2: { x: node.x, y: node.y - node.r },
-              }
-            : rootRoutes[item.id]!;
-          const to = edge(node, route.c2);
-          const path = `${route.stem}C${route.c1.x} ${route.c1.y} ${route.c2.x} ${route.c2.y} ${to.x} ${to.y}`;
-          return (
-            <g key={item.id}>
-              <path
-                data-root={item.id}
-                d={path}
-                strokeWidth={mobile ? 0.85 : 1.45}
-                opacity={i % 3 === 0 ? 0.88 : 0.72}
-              />
-            </g>
-          );
-        })}
-        {!mobile && (
-          <g
-            className="secondary-roots"
-            strokeWidth=".65"
-            opacity=".42"
-            clipPath="url(#root-label-clearance)"
-          >
-            <path d="M488 0V126L435 178 407 203 400 271 372 319 314 332 275 380M515 0V107L552 147M519 124L575 171Q606 198 606 256V290L645 335 695 349 752 349Q769 349 770 372" />
-            <path d="M487 167L459 204V278L432 307 412 344 351 357M500 225V335L481 365V461Q471 497 445 511L410 524 359 525Q333 525 323 554V618L291 656 266 671 221 671" />
-            <path d="M510 329L543 368V473L553 526 543 570 543 629 518 662M518 238L564 304 590 359 590 443 613 476 613 554 640 597Q666 622 686 623L741 630Q793 641 798 686L813 715" />
-            <path d="M629 301L684 309 712 309Q794 309 794 353L795 392 820 407 902 446M646 472H725Q777 473 788 508L809 559 810 596M529 619L510 668 492 692 447 707 424 731M577 592V687L562 718 550 745 550 800" />
-            <path d="M346 405L296 428V502L261 551 256 570M367 657L318 659 277 683 236 686 217 714M522 775L510 799 509 827M658 748L720 769 744 798 780 812M630 694L665 714" />
-          </g>
-        )}
-      </g>
-      {!mobile && (
-        <g fill="currentColor">
-          {[
-            [146, 400],
-            [368, 272],
-            [407, 203],
-            [575, 171],
-            [540, 375],
-            [579, 382],
-            [650, 379],
-            [740, 309],
-            [810, 562],
-            [902, 382],
-            [164, 540],
-            [456, 255],
-            [345, 691],
-            [510, 335],
-            [543, 438],
-            [547, 510],
-            [626, 474],
-            [506, 771],
-            [514, 829],
-            [449, 746],
-            [811, 641],
-            [634, 525],
-          ].map(([cx, cy], i) => (
-            <circle
-              key={i}
-              cx={cx}
-              cy={cy}
-              r={i % 5 === 0 ? 3 : 1.6}
-              opacity={i % 3 === 0 ? 0.9 : 0.5}
-            />
-          ))}
-        </g>
-      )}
+      {mobile ? <Network traces={rootTraces(items, true)} prefix="roots" />
+        : <ReferenceNetwork items={items} dark />}
     </g>
   );
 }
 
-function Construction({ dark }: { dark: boolean }) {
-  const columns = dark
-    ? [44, 163, 289, 431, 482, 530, 578, 628, 675, 739, 796, 848, 909]
-    : [327, 349, 431, 482, 526, 553, 590, 650, 742, 794, 888];
-  return (
-    <g
-      className="construction"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth=".65"
-      opacity={dark ? 0.15 : 0.18}
-    >
-      {columns.map((x, i) => (
-        <g key={x}>
-          <path
-            d={`M${x} ${dark ? (x < 350 ? 420 : 40 + (i % 4) * 47) : 220 + (i % 4) * 71}V${dark ? 822 - (i % 3) * 64 : 720 - (i % 4) * 37}`}
-            strokeDasharray="2 4"
-          />
-          {[0, 1, 2, 3, 4].map((j) => (
-            <circle
-              key={j}
-              cx={x}
-              cy={
-                (dark ? (x < 350 ? 440 : 104) : 254) +
-                j * (dark && x < 350 ? 70 : 100) +
-                (i % 3) * 25
-              }
-              r="1.6"
-              fill="currentColor"
-            />
-          ))}
-        </g>
-      ))}
-      {(dark
-        ? [104, 153, 257, 400, 486, 598, 714]
-        : [278, 323, 438, 467, 555, 615, 670]
-      ).map((y, i) => (
-        <path
-          key={y}
-          d={`M${dark ? 350 - (i % 4) * 77 : 289 + (i % 3) * 49} ${y}H${dark ? 738 + (i % 3) * 77 : 812 + (i % 2) * 73}`}
-          strokeDasharray="2 4"
-        />
-      ))}
-      {!dark && (
-        <>
-          <circle cx="480" cy="188" r="94" strokeDasharray="280 310" />
-          <circle cx="712" cy="532" r="78" />
-          <circle cx="347" cy="698" r="57" />
-          <circle cx="436" cy="530" r="65" strokeDasharray="150 270" />
-        </>
-      )}
-      {dark && <circle cx="869" cy="280" r="21" strokeDasharray="2 3" />}
-    </g>
-  );
-}
-
-export function Thumbnail({ kind }: { kind: string }) {
+export function Thumbnail({ kind, cover = false }: { kind: string; cover?: boolean }) {
   if (kind === "shader")
     return (
-      <svg viewBox="0 0 100 100" aria-hidden="true">
+      <svg viewBox="0 0 100 100" preserveAspectRatio={cover ? "xMidYMid slice" : undefined} aria-hidden="true">
         <defs>
           <radialGradient id="purple">
             <stop stopColor="#9780e9" />
@@ -421,7 +160,7 @@ export function Thumbnail({ kind }: { kind: string }) {
     );
   if (kind === "grid")
     return (
-      <svg viewBox="0 0 100 100" aria-hidden="true">
+      <svg viewBox="0 0 100 100" preserveAspectRatio={cover ? "xMidYMid slice" : undefined} aria-hidden="true">
         <defs>
           <radialGradient id="gridBg">
             <stop stopColor="#172b3f" />
@@ -452,7 +191,7 @@ export function Thumbnail({ kind }: { kind: string }) {
     );
   if (kind === "landscape")
     return (
-      <svg viewBox="0 0 100 100" aria-hidden="true">
+      <svg viewBox="0 0 100 100" preserveAspectRatio={cover ? "xMidYMid slice" : undefined} aria-hidden="true">
         <defs>
           <linearGradient id="sky" x2="0" y2="1">
             <stop stopColor="#8bb4cf" />
@@ -491,7 +230,7 @@ export function Thumbnail({ kind }: { kind: string }) {
     );
   const room = kind === "room";
   return (
-    <svg viewBox="0 0 100 100" aria-hidden="true">
+    <svg viewBox="0 0 100 100" preserveAspectRatio={cover ? "xMidYMid slice" : undefined} aria-hidden="true">
       <defs>
         <linearGradient id={`wall-${kind}`}>
           <stop stopColor="#171d20" />
