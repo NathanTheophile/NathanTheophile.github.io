@@ -16,6 +16,8 @@ The stem bundle continues the original irregular ink contours behind the scroll 
 
 The mobile layout retains its separate, readable branch arrangement. Moving a desktop node extensively requires changing the corresponding artwork too; editing identity or descriptions does not require retracing.
 
+The displayed network and every node share one horizontal SVG translation to center the stem optically. Scroll discs and arrows are centered independently on the viewport. The original path and node coordinates remain intact; linework metrics compare their authoring geometry, while screen-coordinate tests verify the displayed centering separately.
+
 The optional offline tracing script uses local contrast against the reference background, masks the interface content, rejects isolated glyph remnants, and simplifies contour outlines with a 0.3-pixel tolerance. Its diagnostic mask and report show exactly what was retained. It does not replace the page with a bitmap.
 
 To regenerate from the same concept, retain the original calibration captures in `.visual-check/comparison-before/`, including `*-source.png` and `*-allowed.png`, then run:

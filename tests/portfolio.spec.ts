@@ -287,6 +287,31 @@ test("all project and skill previews open on hover and close on leave", async ({
   }
 });
 
+test("tree networks and scroll arrows share the horizontal page center", async ({ page }) => {
+  for (const [width, height] of sizes) {
+    await page.setViewportSize({ width, height });
+    await page.goto("/");
+    await expect(page.locator("main")).toHaveCount(1);
+    for (const [index, id] of ["projects", "tools"].entries()) {
+      await page.evaluate((index) => document.querySelector("main")!.scrollTo({ top: index * innerHeight, behavior: "instant" }), index);
+      const alignment = await page.locator(`#${id}`).evaluate((section) => {
+        const button = section.querySelector(".scroll-circle")!.getBoundingClientRect();
+        const arrow = section.querySelector(".scroll-circle > svg")!.getBoundingClientRect();
+        const network = section.querySelector<SVGGElement>("[data-centered-network]")!;
+        // The desktop axis comes from the traced stem's main ink bands; mobile
+        // has a parametric trunk. The whole network shares one rigid transform.
+        const axis = new DOMPoint(innerWidth <= 700 ? 197 : 507.5, 0).matrixTransform(network.getScreenCTM()!);
+        return { button: button.left + button.width / 2, arrow: arrow.left + arrow.width / 2,
+          axis: axis.x, nodes: [...section.querySelectorAll(".node")].every((node) => node.parentElement === network) };
+      });
+      expect(alignment.button).toBeCloseTo(width / 2, 1);
+      expect(alignment.arrow).toBeCloseTo(width / 2, 1);
+      expect(alignment.axis).toBeCloseTo(width / 2, 1);
+      expect(alignment.nodes).toBe(true);
+    }
+  }
+});
+
 test("trunk contours meet at the page boundary on desktop and mobile", async ({ page }) => {
   for (const [width, height] of [[1000, 870], [390, 844]] as const) {
     await page.setViewportSize({ width, height });

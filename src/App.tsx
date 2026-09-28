@@ -14,7 +14,6 @@ import {
   SkillIcon,
   Thumbnail,
   TreeGraphic,
-  TRUNK_X,
 } from "./Artwork";
 
 type Detail = { title: string; description: string; category: string };
@@ -106,7 +105,7 @@ function Node({
         stroke="currentColor"
       >
         <circle data-connection-ring={!dark || mobile ? "true" : undefined}
-          cx={p.x} cy={p.y} r={p.r} strokeWidth={dark ? 1.5 : 0.65} />
+          cx={p.x} cy={p.y} r={p.r} strokeWidth={dark ? 1.5 : 2} />
         <circle
           data-outer-ring="true"
           data-connection-ring={dark && !mobile ? "true" : undefined}
@@ -354,6 +353,9 @@ export default function App() {
     height: window.innerHeight,
   }));
   const mobile = viewport.width <= 700;
+  // Optical axis of the traced stem's main ink bands; translate the entire
+  // drawing and its nodes together, keeping their original geometry intact.
+  const networkOffset = mobile ? 195 - MOBILE_TRUNK_X : 500 - 507.5;
   // A deliberate minimum art height keeps unusually short phone views readable.
   const mobileHeight = Math.max(660, (viewport.height / viewport.width) * 390);
   const projectItems = mobile ? mobileProjects(mobileHeight) : projects;
@@ -521,56 +523,54 @@ export default function App() {
                     : "A technical tree connecting five projects"
                 }
               >
-                {dark && (
-                  <defs>
-                    <clipPath id="root-label-clearance">
-                      <path
-                        clipRule="evenodd"
-                        d={
-                          `M0 0H${mobile ? 390 : 1000}V${mobile ? mobileHeight : 870}H0Z ` +
-                          skillItems
-                            .map((item) => {
-                              const p = mobile ? item.mobile : item.desktop;
-                              return `M${p.label.x - 4} ${p.label.y - 3}h${p.width + 8}v${mobile ? 51 : 84}h-${p.width + 8}Z`;
-                            })
-                            .join(" ")
-                        }
-                      />
-                    </clipPath>
-                  </defs>
-                )}
-                {dark ? (
-                  <RootsGraphic items={skillItems} mobile={mobile} />
-                ) : (
-                  <TreeGraphic
-                    items={projectItems}
-                    mobile={mobile}
-                    height={mobileHeight}
-                  />
-                )}
+                <g data-centered-network="true" transform={`translate(${networkOffset} 0)`}>
+                  {dark && (
+                    <defs>
+                      <clipPath id="root-label-clearance">
+                        <path
+                          clipRule="evenodd"
+                          d={
+                            `M0 0H${mobile ? 390 : 1000}V${mobile ? mobileHeight : 870}H0Z ` +
+                            skillItems
+                              .map((item) => {
+                                const p = mobile ? item.mobile : item.desktop;
+                                return `M${p.label.x - 4} ${p.label.y - 3}h${p.width + 8}v${mobile ? 51 : 84}h-${p.width + 8}Z`;
+                              })
+                              .join(" ")
+                          }
+                        />
+                      </clipPath>
+                    </defs>
+                  )}
+                  {dark ? (
+                    <RootsGraphic items={skillItems} mobile={mobile} />
+                  ) : (
+                    <TreeGraphic
+                      items={projectItems}
+                      mobile={mobile}
+                      height={mobileHeight}
+                    />
+                  )}
+                  {(dark ? skillItems : projectItems).map((item) => (
+                    <Node
+                      key={item.id}
+                      item={item}
+                      mobile={mobile}
+                      dark={dark}
+                      preview={setPreview}
+                      dismissPreview={dismissPreview}
+                      previewId={preview?.id}
+                    />
+                  ))}
+                </g>
                 {!dark && (
                   <Header mobile={mobile} active={active} go={go} open={open} />
                 )}
-                <Editorial
-                  dark={dark}
-                  mobile={mobile}
-                  onExplore={() => go(dark ? 3 : 2)}
-                />
-                {(dark ? skillItems : projectItems).map((item) => (
-                  <Node
-                    key={item.id}
-                    item={item}
-                    mobile={mobile}
-                    dark={dark}
-                    preview={setPreview}
-                    dismissPreview={dismissPreview}
-                    previewId={preview?.id}
-                  />
-                ))}
+                <Editorial dark={dark} mobile={mobile} onExplore={() => go(dark ? 3 : 2)} />
                 {(!mobile || dark) && <Index go={go} dark={dark} mobile={mobile} />}
                 {(
                   <foreignObject
-                    x={(mobile ? MOBILE_TRUNK_X : TRUNK_X) - (mobile ? 23 : 35)}
+                    x={(mobile ? 195 : 500) - 4 - (mobile ? 21.5 : 30)}
                     y={dark ? (mobile ? 10 : 22) : mobile ? mobileHeight - 62 : 797}
                     width={mobile ? 150 : 176}
                     height={mobile ? 60 : 70}
