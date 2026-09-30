@@ -8,17 +8,19 @@ The workshop at `/?compare` is available only during development. Its iframe ren
 
 ## Authoring
 
-Desktop linework is stored as filled SVG outlines in `src/artwork/tree-network.svg` and `root-network.svg`. The contours preserve the reference's irregular silhouette, variable widths, parallel stems and fine ramifications. They are grouped into five opacity bands. These files contain paths only, with no raster images, scripts, text or external links.
+Desktop linework is stored as filled SVG silhouettes in `src/artwork/tree-network.svg` and `root-network.svg`. Their curved boundaries preserve the reference's local thickness changes, bifurcations, secondary branches and attached technical points. A fine-detail region and a stronger ink region retain the contrast hierarchy. Large construction arcs are exact SVG circles; the faint guide dashes retain their measured source positions. There are no raster images or browser blur filters.
 
-The outlines retain the original branch tips through the comparison mask's padded circle exclusion. An SVG clip trims project branches at the intermediate ring (the ring directly surrounding the thumbnail) and roots at the outer ring. There are no separate radial connector strokes: the branch silhouette and direction continue unchanged to the circle. `src/artwork/anchors.ts` records nearby linework for diagnostic landmarks only.
+The authoring script recovers branch tips through the comparison mask's padded circle exclusion. An SVG clip trims project branches at the intermediate ring and roots at the outer ring. No separate radial connector strokes are added. `src/artwork/anchors.ts` records nearby linework for diagnostic landmarks only.
 
-The stem bundle continues the original irregular ink contours behind the scroll control to the bottom of the frame. The authoring script reflects a 60-pixel strip of the traced trunk rather than adding clean analytic strokes. The roots start with the same contour profile and blend into their original outlines over 110 pixels. Both SVG assets reach the frame edges; a painted-boundary test checks their alignment and ink coverage. The inner scroll discs stay opaque for their arrows, while stems remain visible through the outer annuli. Node rings have no downward decoration or top/left dot markers, including in the traced source contours.
+The stem bundle continues behind the scroll control to the frame edge. Both pages derive their stem silhouettes from the same sampled source field, with matching widths and opacity at the shared edge. The inner scroll discs stay opaque for their arrows, while stems remain visible through the outer annuli. A painted-boundary test checks alignment and ink coverage. Node rings have no downward decoration or top/left dot markers.
 
 The mobile layout retains its separate, readable branch arrangement. Moving a desktop node extensively requires changing the corresponding artwork too; editing identity or descriptions does not require retracing.
 
 The displayed network and every node share one horizontal SVG translation to center the stem optically. Scroll discs and arrows are centered independently on the viewport. The original path and node coordinates remain intact; linework metrics compare their authoring geometry, while screen-coordinate tests verify the displayed centering separately.
 
-The optional offline tracing script uses local contrast against the reference background, masks the interface content, rejects isolated glyph remnants, and simplifies contour outlines with a 0.3-pixel tolerance. Its diagnostic mask and report show exactly what was retained. It does not replace the page with a bitmap.
+The optional offline authoring script uses local contrast against the original reference, excludes interface content and rejects glyph remnants. Subpixel contours are resampled and smoothed along their boundaries before fitting quadratic curves. The process keeps variable widths and technical details instead of reducing branches to uniform strokes. Frame padding preserves the shared trunk. Regeneration always starts from the original calibrated source, never from a previous rendered iteration. Python is used only during authoring; the browser displays exported vector geometry directly.
+
+A vector luminance mask reduces pale detail opacity by about 30% away from principal ink and by about 80% in the 1.2 px rim beside it. The principal silhouettes and their underpaint retain their approved geometry and contrast. This avoids cutting secondary branches into disconnected fragments.
 
 To regenerate from the same concept, retain the original calibration captures in `.visual-check/comparison-before/`, including `*-source.png` and `*-allowed.png`, then run:
 

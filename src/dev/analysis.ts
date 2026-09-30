@@ -97,12 +97,16 @@ export async function analyze(
   const textBounds: { left: number; top: number; right: number; bottom: number }[] = [];
   const selectors = ".node-copy h3,.node-copy p,.node-copy button,.editorial h1,.editorial h2,.editorial p,.outline-cta,.section-label,.disciplines,.section-index";
   sectionElement.querySelectorAll(selectors).forEach((element) => {
+    // Linework is measured in the original authoring frame. Node captions
+    // share the display translation, so undo it for their source text masks.
+    const network = element.closest<SVGGElement>("[data-centered-network]");
+    const textInverse = network ? network.getScreenCTM()!.inverse() : inverse;
     const range = document.createRange(); range.selectNodeContents(element);
     const rects = element.matches("button,.outline-cta,.section-label,.disciplines,.section-index")
       ? [element.getBoundingClientRect()] : [...range.getClientRects()];
     rects.forEach((rect) => {
-      const a = new DOMPoint(rect.left, rect.top).matrixTransform(inverse);
-      const b = new DOMPoint(rect.right, rect.bottom).matrixTransform(inverse);
+      const a = new DOMPoint(rect.left, rect.top).matrixTransform(textInverse);
+      const b = new DOMPoint(rect.right, rect.bottom).matrixTransform(textInverse);
       if (element.matches(".node-copy h3,.node-copy p,.editorial h1,.editorial h2,.editorial p"))
         textBounds.push({ left: a.x, top: a.y, right: b.x, bottom: b.y });
       const padding = element.matches(".outline-cta,.editorial p,.editorial h1,.editorial h2") ? 18 : 7;

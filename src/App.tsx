@@ -1,11 +1,10 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { ButtonHTMLAttributes } from "react";
 import {
-  identity,
   mobileProjects,
   mobileSkills,
-  projects,
-  skills,
+  projectContent,
+  skillContent,
 } from "./data";
 import type { Item } from "./data";
 import {
@@ -15,6 +14,12 @@ import {
   Thumbnail,
   TreeGraphic,
 } from "./Artwork";
+
+import { ContentContext, EditContext, mediaUrl } from "./content";
+
+const textField = (path: string) => import.meta.env.DEV ? { "data-edit-text": path } : {};
+const mediaField = (path: string) => import.meta.env.DEV ? { "data-edit-media": path } : {};
+const groupField = (path: string) => import.meta.env.DEV ? { "data-edit-group": path } : {};
 
 type Detail = { title: string; description: string; category: string };
 type Preview = Detail & { id: string; dark: boolean; anchor: DOMRect; mark: string; media?: Item["previewMedia"] };
@@ -42,7 +47,7 @@ function PreviewPanel({ preview }: { preview: Preview }) {
   return <div ref={panel} id="node-preview" role="tooltip"
     className={`preview-panel ${preview.dark ? "dark" : ""}`} style={position}>
     <div className="preview-media" style={{ width: mediaSize }}>
-      {preview.media ? <img src={preview.media.src} alt={preview.media.alt ?? preview.title} />
+      {preview.media ? <img src={mediaUrl(preview.media.src)} alt={preview.media.alt ?? preview.title} />
         : preview.dark ? <SkillIcon kind={preview.mark} /> : <Thumbnail kind={preview.mark} />}
     </div>
     <div className="preview-copy" ref={copy}>
@@ -80,10 +85,12 @@ function Node({
   dismissPreview: (id: string) => void;
   previewId?: string;
 }) {
+  const edit = import.meta.env.DEV ? useContext(EditContext) : null;
+  const contentPath = (dark ? "skills." : "projects.") + item.id;
   const p = mobile ? item.mobile : item.desktop;
   const show = (button: HTMLButtonElement) => preview({ id: item.id, title: item.title,
     description: item.description, category: dark ? "Tool & skill" : "Project",
-    dark: !!dark, anchor: button.getBoundingClientRect(), mark: item.mark, media: item.previewMedia });
+    dark: !!dark, anchor: button.getBoundingClientRect(), mark: item.mark, media: item.previewMedia ?? item.thumbnailMedia });
   const interactions: ButtonHTMLAttributes<HTMLButtonElement> = {
     "aria-describedby": previewId === item.id ? "node-preview" : undefined,
     onPointerEnter: (event) => { if (event.pointerType !== "touch") show(event.currentTarget); },
@@ -134,10 +141,11 @@ function Node({
       >
         <button
           className="node-image"
+          {...mediaField(contentPath + ".thumbnailMedia")}
           aria-label={`Explore ${item.title}`}
           {...interactions}
         >
-          {dark ? (
+          {item.thumbnailMedia ? <img src={mediaUrl(item.thumbnailMedia.src)} alt={item.thumbnailMedia.alt ?? item.title} /> : dark ? (
             <SkillIcon kind={item.mark} />
           ) : (
             <Thumbnail kind={item.mark} />
@@ -151,8 +159,8 @@ function Node({
         height={mobile ? 90 : 114}
       >
         <div className="node-copy">
-          <h3>{item.title}</h3>
-          <p>{item.description}</p>
+          <h3 {...textField(contentPath + ".title")}>{item.title}</h3>
+          <p {...textField(contentPath + ".description")}>{item.description}</p>
           <button
             className="node-action"
             {...interactions}
@@ -160,6 +168,7 @@ function Node({
           >
             <Arrow />
           </button>
+          {import.meta.env.DEV && edit && <button className="node-edit" onClick={() => edit(contentPath)}>Modifier</button>}
         </div>
       </foreignObject>
     </g>
@@ -175,6 +184,9 @@ function Editorial({
   mobile: boolean;
   onExplore: () => void;
 }) {
+  const content = useContext(ContentContext);
+  const pageIndex = dark ? 1 : 0;
+  const action = dark ? "moreTools" : "moreProjects";
   return (
     <foreignObject
       x={mobile ? 22 : 45}
@@ -186,10 +198,10 @@ function Editorial({
         <div className="section-label" id={!dark ? "projects-title" : undefined}>
           <span>{dark ? "02" : "01"}</span>
           <i />
-          {dark ? "TOOLS & SKILLS" : "PROJECTS"}
+          <span {...textField("pages." + pageIndex + ".label")}>{content.pages[pageIndex].label}</span>
         </div>
         <button className="outline-cta" onClick={onExplore}>
-          {dark ? "MORE TOOLS" : "MORE PROJECTS"}
+          <span {...textField("interface." + action)}>{content.interface[action]}</span>
           <Arrow />
         </button>
       </div>
@@ -201,13 +213,12 @@ function Header({
   mobile,
   active,
   go,
-  open,
 }: {
   mobile: boolean;
   active: number;
   go: (page: number) => void;
-  open: (detail: Detail) => void;
 }) {
+  const { identity, pages } = useContext(ContentContext);
   return (
     <foreignObject
       x="0"
@@ -219,58 +230,28 @@ function Header({
         <button
           className="identity"
           onClick={() => go(0)}
-          aria-label="Alex Park — Projects"
+          aria-label={identity.name + " — Projects"}
         >
-          <svg className="monogram" viewBox="0 0 40 32" aria-hidden="true">
+          <span className="brand-mark" {...mediaField("identity.logoMedia")}>
+          {identity.logoMedia ? <img className="monogram" src={mediaUrl(identity.logoMedia.src)} alt={identity.logoMedia.alt ?? ""} /> : <svg className="monogram" viewBox="0 0 40 32" aria-hidden="true">
             <path
               d="M2 29 14 4h6L8 29m3-9h11m-2 9V4h8c12 0 12 15 0 15h-8"
               stroke="currentColor"
               fill="none"
               strokeWidth="3.2"
             />
-          </svg>
+          </svg>}
+          </span>
           <span>
-            <strong>{identity.name}</strong>
-            <small>{identity.role}</small>
+            <strong {...textField("identity.name")}>{identity.name}</strong>
+            <small {...textField("identity.role")}>{identity.role}</small>
           </span>
         </button>
         <nav aria-label="Main navigation">
-          <button
-            aria-current={active === 0 ? "page" : undefined}
-            onClick={() => go(0)}
-          >
-            PROJECTS
-          </button>
-          <button
-            aria-current={active === 1 ? "page" : undefined}
-            onClick={() => go(1)}
-          >
-            TOOLS
-          </button>
-          <button
-            onClick={() =>
-              open({
-                title: "About",
-                category: "Portfolio",
-                description:
-                  "An introduction to the developer, their approach, and their interests. This placeholder is ready for your biography.",
-              })
-            }
-          >
-            ABOUT
-          </button>
-          <button
-            onClick={() =>
-              open({
-                title: "Contact",
-                category: "Let’s talk",
-                description:
-                  "Your preferred contact details and social links will live here. Replace the placeholder email when you are ready.",
-              })
-            }
-          >
-            CONTACT
-          </button>
+          {pages.map((page, index) => (
+            <button key={index} aria-current={active === index ? "page" : undefined}
+              onClick={() => go(index)}><span {...textField("pages." + index + ".headerLabel")}>{page.headerLabel}</span></button>
+          ))}
         </nav>
       </header>
     </foreignObject>
@@ -280,29 +261,26 @@ function Header({
 function Index({ go, dark = false, mobile = false }: {
   go: (page: number) => void; dark?: boolean; mobile?: boolean;
 }) {
+  const { pages } = useContext(ContentContext);
   return (
     <foreignObject x={dark ? (mobile ? 230 : 849) : 45}
-      y={dark ? (mobile ? 122 : 69) : 700} width={dark ? 145 : 225} height="122">
+      y={dark ? (mobile ? 122 : 69) : 700} width={dark ? 145 : 225} height="140">
       <nav className="section-index" aria-label="Section navigation">
-        <button className={!dark ? "selected" : undefined} aria-current={!dark ? "page" : undefined} onClick={() => go(0)}>
-          <span>01</span>PROJECTS
-        </button>
-        <button className={dark ? "selected" : undefined} aria-current={dark ? "page" : undefined} onClick={() => go(1)}>
-          <span>02</span>TOOLS & SKILLS
-        </button>
-        <span className="index-note">
-          <span>03</span>ABOUT
-        </span>
-        <span className="index-note">
-          <span>04</span>CONTACT
-        </span>
+        {pages.map((page, index) => (
+          <button key={index} className={index === (dark ? 1 : 0) ? "selected" : undefined}
+            aria-current={index === (dark ? 1 : 0) ? "page" : undefined} onClick={() => go(index)}>
+            <span>{String(index + 1).padStart(2, "0")}</span><span {...textField("pages." + index + ".navLabel")}>{page.navLabel}</span>
+          </button>
+        ))}
       </nav>
     </foreignObject>
   );
 }
 
 function Catalog({ dark = false, open }: { dark?: boolean; open: (detail: Detail) => void }) {
-  const items = dark ? skills : projects;
+  const content = useContext(ContentContext);
+  const items = dark ? skillContent(content) : projectContent(content);
+  const pageIndex = dark ? 3 : 2;
   return (
     <section id={dark ? "tools-grid" : "projects-grid"}
       className={`screen catalog ${dark ? "skills" : "projects"}`}
@@ -310,25 +288,53 @@ function Catalog({ dark = false, open }: { dark?: boolean; open: (detail: Detail
       <div className="catalog-stage">
         <header className="catalog-header">
           <div>
-            <div className="section-label"><span>{dark ? "04" : "03"}</span><i />{dark ? "SKILLS & TOOLS" : "PROJECTS"}</div>
-            <h2 id={dark ? "tools-grid-title" : "projects-grid-title"}>{dark ? "All skills & tools" : "All projects"}</h2>
+            <div className="section-label"><span>{dark ? "04" : "03"}</span><i /><span {...textField("pages." + pageIndex + ".label")}>{content.pages[pageIndex].label}</span></div>
+            <h2 id={dark ? "tools-grid-title" : "projects-grid-title"} {...textField("pages." + pageIndex + ".title")}>{content.pages[pageIndex].title}</h2>
           </div>
-          <span className="catalog-count">{String(items.length).padStart(2, "0")} {dark ? "TOOLS & SKILLS" : "PROJECTS"}</span>
+          <span className="catalog-count">{String(items.length).padStart(2, "0")} {content.pages[pageIndex].label}</span>
         </header>
         <div className="catalog-scroll" tabIndex={0} role="region" aria-label={dark ? "Skills and tools grid" : "Project grid"}>
           <div className="catalog-grid">
             {items.map((item) => (
-              <button className="catalog-card" key={item.id}
+              <button className="catalog-card" key={item.id} {...groupField((dark ? "skills." : "projects.") + item.id)}
                 onClick={() => open({ title: item.title, description: item.description, category: dark ? "Tool & skill" : "Project" })}>
-                <span className="catalog-media" aria-hidden="true">
-                  {item.previewMedia ? <img src={item.previewMedia.src} alt="" />
+                <span className="catalog-media" aria-hidden="true" {...mediaField((dark ? "skills." : "projects.") + item.id + ".thumbnailMedia")}>
+                  {(item.thumbnailMedia ?? item.previewMedia) ? <img src={mediaUrl((item.thumbnailMedia ?? item.previewMedia)!.src)} alt="" />
                     : dark ? <SkillIcon kind={item.mark} /> : <Thumbnail kind={item.mark} cover />}
                 </span>
-                <span className="catalog-copy"><strong>{item.title}</strong><span>{item.description}</span></span>
+                <span className="catalog-copy"><strong {...textField((dark ? "skills." : "projects.") + item.id + ".title")}>{item.title}</strong><span {...textField((dark ? "skills." : "projects.") + item.id + ".description")}>{item.description}</span></span>
                 <Arrow />
               </button>
             ))}
           </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function Contact() {
+  const { identity, contact, pages } = useContext(ContentContext);
+  return (
+    <section id="contact" className="screen projects contact" aria-labelledby="contact-title">
+      <div className="catalog-stage">
+        <header className="catalog-header">
+          <div>
+            <div className="section-label"><span>05</span><i /><span {...textField("pages.4.label")}>{pages[4].label}</span></div>
+            <h2 id="contact-title" {...textField("pages.4.title")}>{pages[4].title}</h2>
+          </div>
+        </header>
+        <div className="contact-content">
+          <div className="contact-intro">
+            <h3 {...textField("contact.heading")}>{contact.heading}</h3>
+            <p {...textField("contact.description")}>{contact.description}</p>
+            <div className="contact-identity"><strong {...textField("identity.name")}>{identity.name}</strong><span {...textField("identity.role")}>{identity.role}</span></div>
+          </div>
+          <a className="contact-email" href={"mailto:" + identity.email}>
+            <span className="section-label" {...textField("contact.emailLabel")}>{contact.emailLabel}</span>
+            <strong {...textField("identity.email")}>{identity.email}</strong>
+            <Arrow />
+          </a>
         </div>
       </div>
     </section>
@@ -344,6 +350,9 @@ function canScroll(element: HTMLElement | null, delta: number) {
 }
 
 export default function App() {
+  const content = useContext(ContentContext);
+  const { pages } = content;
+  const projects = projectContent(content), skills = skillContent(content);
   const scroller = useRef<HTMLElement>(null);
   const dialog = useRef<HTMLDialogElement>(null);
   const [active, setActive] = useState(0);
@@ -358,8 +367,8 @@ export default function App() {
   const networkOffset = mobile ? 195 - MOBILE_TRUNK_X : 500 - 507.5;
   // A deliberate minimum art height keeps unusually short phone views readable.
   const mobileHeight = Math.max(660, (viewport.height / viewport.width) * 390);
-  const projectItems = mobile ? mobileProjects(mobileHeight) : projects;
-  const skillItems = mobile ? mobileSkills(mobileHeight) : skills;
+  const projectItems = mobile ? mobileProjects(mobileHeight, projects) : projects;
+  const skillItems = mobile ? mobileSkills(mobileHeight, skills) : skills;
   const [detail, setDetail] = useState<Detail | null>(null);
   const [preview, setPreview] = useState<Preview | null>(null);
   const dismissPreview = (id: string) => setPreview((current) => current?.id === id ? null : current);
@@ -372,7 +381,7 @@ export default function App() {
     setPreview(null);
     const element = scroller.current;
     if (!element) return;
-    const target = Math.max(0, Math.min(3, page));
+    const target = Math.max(0, Math.min(pages.length - 1, page));
     locked.current = true;
     clearTimeout(unlockTimer.current);
     element.scrollTo({
@@ -424,23 +433,23 @@ export default function App() {
       if (
         dialog.current?.open ||
         (event.target instanceof HTMLElement &&
-          event.target.matches("input,textarea,select"))
+          event.target.closest("input,textarea,select,[contenteditable]"))
       )
         return;
       const current = Math.round(element.scrollTop / element.clientHeight);
-      const pages: Record<string, number> = {
+      const keyTargets: Record<string, number> = {
         ArrowDown: current + 1,
         PageDown: current + 1,
         ArrowUp: current - 1,
         PageUp: current - 1,
         Home: 0,
-        End: 3,
+        End: pages.length - 1,
       };
       if (event.key === " " && event.target === document.body)
-        pages[" "] = event.shiftKey ? current - 1 : current + 1;
-      if (event.key in pages) {
+        keyTargets[" "] = event.shiftKey ? current - 1 : current + 1;
+      if (event.key in keyTargets) {
         event.preventDefault();
-        if (!locked.current) go(pages[event.key]!);
+        if (!locked.current) go(keyTargets[event.key]!);
       }
     };
     const resize = () => {
@@ -564,7 +573,7 @@ export default function App() {
                   ))}
                 </g>
                 {!dark && (
-                  <Header mobile={mobile} active={active} go={go} open={open} />
+                  <Header mobile={mobile} active={active} go={go} />
                 )}
                 <Editorial dark={dark} mobile={mobile} onExplore={() => go(dark ? 3 : 2)} />
                 {(!mobile || dark) && <Index go={go} dark={dark} mobile={mobile} />}
@@ -585,9 +594,9 @@ export default function App() {
                       </span>
                       {(!mobile || mobileHeight >= 844) && (
                         <span className="scroll-caption">
-                          {dark ? "BACK" : "SCROLL"}
+                          <span {...textField(dark ? "interface.backCaption" : "interface.scrollCaption")}>{dark ? content.interface.backCaption : content.interface.scrollCaption}</span>
                           <br />
-                          {dark ? "TO PROJECTS" : "TO EXPLORE"}
+                          <span {...textField(dark ? "interface.backDescription" : "interface.scrollDescription")}>{dark ? content.interface.backDescription : content.interface.scrollDescription}</span>
                         </span>
                       )}
                     </button>
@@ -599,7 +608,11 @@ export default function App() {
         ))}
         <Catalog open={open} />
         <Catalog dark open={open} />
+        <Contact />
       </main>
+      {import.meta.env.DEV && ["localhost", "127.0.0.1", "[::1]"].includes(location.hostname) && active === 0 &&
+        !new URLSearchParams(location.search).has("editor-preview") &&
+        <a href="?edit" style={{ position: "fixed", bottom: 12, right: 12, zIndex: 5, padding: "9px 14px", background: "#222a33", color: "white", borderRadius: 4, fontSize: 12 }}>Éditer le contenu</a>}
       {preview && <PreviewPanel preview={preview} />}
       <dialog
         ref={dialog}
@@ -622,14 +635,6 @@ export default function App() {
             <span className="section-label">{detail.category}</span>
             <h2 id="detail-title">{detail.title}</h2>
             <p>{detail.description}</p>
-            <div className="placeholder-note">
-              PLACEHOLDER CONTENT — READY TO PERSONALIZE
-            </div>
-            {detail.title === "Contact" && (
-              <a className="contact-link" href={`mailto:${identity.email}`}>
-                {identity.email} ↗
-              </a>
-            )}
           </div>
         )}
       </dialog>

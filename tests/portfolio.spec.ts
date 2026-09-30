@@ -36,7 +36,7 @@ for (const [width, height] of sizes) {
       if (message.type() === "error") errors.push(message.text());
     });
     await page.goto("/");
-    await expect(page.locator(".screen")).toHaveCount(4);
+    await expect(page.locator(".screen")).toHaveCount(5);
     await expect(page.locator("#projects .node")).toHaveCount(5);
     await expect(page.locator("#tools .node")).toHaveCount(11);
     await landed(page, 0);
@@ -54,8 +54,8 @@ for (const [width, height] of sizes) {
     }));
     expect(geometry.bodyOverflow).toBe(false);
     expect(geometry.scrollerOverflow).toBe(false);
-    expect(geometry.sectionHeights).toEqual([height, height, height, height]);
-    expect(geometry.total).toBe(height * 4);
+    expect(geometry.sectionHeights).toEqual([height, height, height, height, height]);
+    expect(geometry.total).toBe(height * 5);
     await expect(page.locator("#projects-grid .catalog-card")).toHaveCount(5);
     await expect(page.locator("#tools-grid .catalog-card")).toHaveCount(11);
     const clippedCards = await page.locator(".catalog-card").evaluateAll((cards) =>
@@ -234,11 +234,14 @@ test("hover previews, contact and keyboard focus work", async ({ page }) => {
   await page.keyboard.press("Escape");
   await expect(page.getByRole("tooltip")).toHaveCount(0);
   await page.getByRole("button", { name: "CONTACT", exact: true }).click();
-  await expect(page.getByRole("dialog").getByRole("link")).toHaveAttribute(
+  await landed(page, 4);
+  await expect(page.locator("#contact").getByRole("link")).toHaveAttribute(
     "href",
     "mailto:hello@example.com",
   );
-  await page.getByRole("button", { name: "Close details" }).click();
+  await expect(page.getByRole("dialog")).not.toBeVisible();
+  await page.keyboard.press("Home");
+  await landed(page, 0);
   await page.keyboard.press("PageDown");
   await landed(page, 1);
   await page
@@ -316,7 +319,7 @@ test("trunk contours meet at the page boundary on desktop and mobile", async ({ 
   for (const [width, height] of [[1000, 870], [390, 844]] as const) {
     await page.setViewportSize({ width, height });
     await page.goto("/");
-    await expect(page.locator(".screen")).toHaveCount(4);
+    await expect(page.locator(".screen")).toHaveCount(5);
     if (width > 700) await expect(page.locator("[data-reference-network]")).toHaveCount(2);
     else await expect(page.locator("#tree-trunk")).toHaveCount(1);
     if (width > 700) {
@@ -342,7 +345,7 @@ test("trunk contours meet at the page boundary on desktop and mobile", async ({ 
         return output;
       });
       expect(strips[0]!.filter((alpha) => alpha > 50).length).toBeGreaterThan(20);
-      // Filled, textured contours meet across the seam; no uniform stroke substitute.
+      // The painted stem positions and coverage match across the seam.
       for (const [from, to] of [[strips[0]!, strips[1]!], [strips[1]!, strips[0]!]]) {
         const ink = to.map((alpha, x) => alpha > 50 ? x : -1).filter((x) => x >= 0);
         from.forEach((alpha, x) => {
@@ -405,7 +408,7 @@ test("compact chapter headers and the dark trunk return control work", async ({ 
   await landed(page, 0);
 });
 
-test("catalog links, mirrored section navigation and four-page snapping work", async ({ page }) => {
+test("catalog links, mirrored section navigation and five-page snapping work", async ({ page }) => {
   await page.setViewportSize({ width: 1000, height: 870 });
   await page.goto("/");
   await expect(page.locator(".disciplines")).toHaveCount(0);
@@ -423,17 +426,19 @@ test("catalog links, mirrored section navigation and four-page snapping work", a
   await page.keyboard.press("Home");
   await landed(page, 0);
   await page.mouse.move(5, 400);
-  for (const screen of [1, 2, 3]) {
+  for (const screen of [1, 2, 3, 4]) {
     await page.mouse.wheel(0, 60);
     await landed(page, screen);
   }
   await page.keyboard.press("PageUp");
+  await landed(page, 3);
+  await page.keyboard.press("PageUp");
   await landed(page, 2);
   await page.keyboard.press("PageUp");
   await landed(page, 1);
-  const numberPositions = await index.locator("button > span").evaluateAll((numbers) => numbers.map((number) => number.getBoundingClientRect().left));
+  const numberPositions = await index.locator("button > span:first-child").evaluateAll((numbers) => numbers.map((number) => number.getBoundingClientRect().left));
   expect(numberPositions[0]).toBeCloseTo(numberPositions[1]!, 1);
-  await index.getByRole("button", { name: /PROJECTS/ }).click();
+  await index.getByRole("button").first().click();
   await landed(page, 0);
   await page.getByRole("button", { name: "Scroll to tools and skills" }).click();
   await landed(page, 1);
@@ -442,9 +447,9 @@ test("catalog links, mirrored section navigation and four-page snapping work", a
   await page.keyboard.press("Home");
   await landed(page, 0);
   await page.keyboard.press("End");
-  await landed(page, 3);
+  await landed(page, 4);
   await page.setViewportSize({ width: 390, height: 844 });
-  await landed(page, 3);
+  await landed(page, 4);
 });
 
 test("small-screen catalogs scroll through all cards before changing page", async ({ page }) => {
@@ -471,6 +476,47 @@ test("small-screen catalogs scroll through all cards before changing page", asyn
   await page.mouse.move(toolsBox!.x + 40, toolsBox!.y + 50);
   await page.mouse.wheel(0, -100);
   await landed(page, 2);
+});
+
+test("all five header destinations and chapter Contact links work on desktop and mobile", async ({ page }) => {
+  test.setTimeout(60000);
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  for (const [width, height] of [[1000, 870], [360, 640]] as const) {
+    await page.setViewportSize({ width, height });
+    await page.goto("/");
+    const header = page.getByRole("navigation", { name: "Main navigation" });
+    await expect(header.getByRole("button")).toHaveText(["PROJECTS", "TOOLS", "ALL PROJECTS", "ALL TOOLS", "CONTACT"]);
+    for (let destination = 0; destination < 5; destination++) {
+      await header.getByRole("button").nth(destination).click();
+      await landed(page, destination);
+      await expect(page.getByRole("dialog")).not.toBeVisible();
+      await page.keyboard.press("Home");
+      await landed(page, 0);
+    }
+    const bounds = await header.getByRole("button").evaluateAll((buttons) => buttons.map((button) => {
+      const rect = button.getBoundingClientRect();
+      return { left: rect.left, right: rect.right, bottom: rect.bottom };
+    }));
+    expect(bounds.every((rect) => rect.left >= 0 && rect.right <= width && rect.bottom <= height)).toBe(true);
+    for (const section of width > 700 ? ["projects", "tools"] : ["tools"]) {
+      await page.evaluate((section) => document.querySelector("main")!.scrollTo({ top: section === "tools" ? innerHeight : 0, behavior: "instant" }), section);
+      const index = page.locator(`#${section} .section-index`);
+      await expect(index.getByRole("button")).toHaveCount(5);
+      await index.getByRole("button", { name: /05.*CONTACT/ }).click();
+      await landed(page, 4);
+    }
+    const email = page.locator("#contact").getByRole("link");
+    await expect(email).toHaveAttribute("href", "mailto:hello@example.com");
+    await expect(email).toBeInViewport();
+    const overflow = await page.locator("#contact").evaluate((section) => [...section.querySelectorAll(".contact-content, .contact-email, .contact-identity")]
+      .some((element) => element.scrollWidth > element.clientWidth + 1 || element.getBoundingClientRect().bottom > innerHeight));
+    expect(overflow).toBe(false);
+    await page.mouse.move(5, 5);
+    await page.mouse.wheel(0, 60);
+    await landed(page, 4);
+    await page.mouse.wheel(0, -60);
+    await landed(page, 3);
+  }
 });
 
 test("preview media accepts a native GIF source", async ({ page }) => {
@@ -545,6 +591,11 @@ test("mobile swipes change exactly one page in both directions", async ({
   const grid = page.getByRole("region", { name: "Skills and tools grid", exact: true });
   await swipe(650, 440);
   await expect.poll(() => grid.evaluate((element) => element.scrollTop)).toBeGreaterThan(0);
+  await landed(page, 3);
+  await grid.evaluate((element) => { element.scrollTop = element.scrollHeight; });
+  await swipe(650, 440);
+  await landed(page, 4);
+  await swipe(350, 560);
   await landed(page, 3);
   // Stop native touch momentum before testing an upward gesture at the edge.
   await grid.evaluate((element) => { element.scrollTop = 0; });

@@ -6,7 +6,7 @@ test("desktop branches reach their target rings continuously and stop outside th
   await page.setViewportSize({ width: 1000, height: 870 });
   await page.goto("/");
   await expect(page.locator("[data-reference-network]")).toHaveCount(2);
-  // Test the painted filled contours, not the old connector endpoints. At 4×
+  // Test the painted vector branches, not the old connector endpoints. At 4×
   // resolution even a small gap or a branch extending inside a ring is visible.
   for (const section of ["projects", "tools"]) {
     const junctions = await page.locator(`#${section}`).evaluate(async (element) => {
@@ -70,7 +70,8 @@ test("desktop branches reach their target rings continuously and stop outside th
       expect(junction.ringPaths, `${junction.id}: no descending decoration`).toBe(1);
       expect(junction.ringCircles, `${junction.id}: no dot decorations`).toBe(2);
     }
-    await expect(page.locator(`#${section} [data-reference-network] > g[clip-path] [stroke]`)).toHaveCount(0);
+    await expect(page.locator(`#${section} [data-outline-layer], #${section} [data-reference-network] image, #${section} [data-reference-network] filter`)).toHaveCount(0);
+    expect(await page.locator(`#${section} [data-network-branch]`).count()).toBeGreaterThan(0);
   }
 });
 
@@ -129,7 +130,7 @@ test.describe("reference comparison", () => {
     const svgDownload = page.waitForEvent("download");
     await page.getByRole("button", { name: "Exporter les tracés SVG", exact: true }).click();
     const svg = await readFile((await (await svgDownload).path())!, "utf8");
-    expect(svg).toContain("data-outline-layer");
+    expect(svg).toContain("data-network-branch");
     expect(svg).toContain("#222a33");
     expect(svg).not.toMatch(/<image|image\.png|base64/);
   });
@@ -143,6 +144,7 @@ test("the normal portfolio uses vector assets without loading the reference or e
   await page.goto("/");
   await expect(page.locator("[data-reference-network]")).toHaveCount(2);
   await expect(page.locator(".comparison-tool")).toHaveCount(0);
-  await expect(page.locator("[data-outline-layer]")).toHaveCount(10);
+  await expect(page.locator("[data-outline-layer]")).toHaveCount(0);
+  expect(await page.locator("[data-network-branch]").count()).toBeGreaterThan(0);
   expect(referenceRequests).toEqual([]);
 });

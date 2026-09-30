@@ -8,22 +8,23 @@ export { TRUNK_X, MOBILE_TRUNK_X } from "./branchGeometry";
 
 function ReferenceNetwork({ items, dark }: { items: Item[]; dark: boolean }) {
   const prefix = dark ? "roots" : "tree";
+  const outlineUrl = dark ? rootOutline : treeOutline;
   const [outline, setOutline] = useState("");
   useEffect(() => {
     let active = true;
-    fetch(dark ? rootOutline : treeOutline).then((response) => response.text()).then((source) => {
+    fetch(outlineUrl).then((response) => response.text()).then((source) => {
       if (active) setOutline(source.replace(/<svg[^>]*>/, "").replace(/<\/svg>/, "")
-        .replace('<path data-outline-layer=', `<path id="${prefix}-reference-base" data-outline-layer=`));
+        .replace('<path data-network-branch=', `<path id="${prefix}-reference-base" data-network-branch=`));
     });
     return () => { active = false; };
-  }, [dark, prefix]);
+  }, [outlineUrl, prefix]);
   if (!outline) return null;
   // Projects reach the intermediate ring; roots retain the outer-ring contact.
   const holes = items.map(({ desktop: node }) => {
     const r = node.r + (dark ? 9 : 0);
     return `M${node.x-r} ${node.y}a${r} ${r} 0 1 0 ${2*r} 0a${r} ${r} 0 1 0 ${-2*r} 0Z`;
   }).join("");
-  return <g fill="currentColor" data-reference-network={prefix}>
+  return <g fill="currentColor" strokeLinecap="round" strokeLinejoin="round" data-reference-network={prefix}>
     <defs>
       <clipPath id={`${prefix}-outside-rings`} clipPathUnits="userSpaceOnUse">
         <path clipRule="evenodd" d={`M0 0H1000V870H0Z${holes}`} />

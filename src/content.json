@@ -1,0 +1,153 @@
+{
+  "identity": {
+    "name": "Alex Park",
+    "role": "Technical Art & Game Development",
+    "email": "hello@example.com",
+    "logoMedia": null
+  },
+  "pages": [
+    {
+      "label": "PROJECTS",
+      "navLabel": "PROJECTS",
+      "headerLabel": "PROJECTS",
+      "title": ""
+    },
+    {
+      "label": "TOOLS & SKILLS",
+      "navLabel": "TOOLS & SKILLS",
+      "headerLabel": "TOOLS",
+      "title": ""
+    },
+    {
+      "label": "PROJECTS",
+      "navLabel": "ALL PROJECTS",
+      "headerLabel": "ALL PROJECTS",
+      "title": "All projects"
+    },
+    {
+      "label": "SKILLS & TOOLS",
+      "navLabel": "ALL TOOLS",
+      "headerLabel": "ALL TOOLS",
+      "title": "All skills & tools"
+    },
+    {
+      "label": "CONTACT",
+      "navLabel": "CONTACT",
+      "headerLabel": "CONTACT",
+      "title": "Contact"
+    }
+  ],
+  "interface": {
+    "moreProjects": "MORE PROJECTS",
+    "moreTools": "MORE TOOLS",
+    "scrollCaption": "SCROLL",
+    "scrollDescription": "TO EXPLORE",
+    "backCaption": "BACK",
+    "backDescription": "TO PROJECTS"
+  },
+  "contact": {
+    "heading": "Let’s talk.",
+    "description": "For projects, collaborations, or a conversation about technical art and game development.",
+    "emailLabel": "EMAIL"
+  },
+  "projects": {
+    "recent": {
+      "title": "Recent Project",
+      "description": "Real-time environment\nand lighting exploration.",
+      "thumbnailMedia": null,
+      "previewMedia": null
+    },
+    "prototype": {
+      "title": "Game Prototype",
+      "description": "Core mechanics\nand systems design.",
+      "thumbnailMedia": null,
+      "previewMedia": null
+    },
+    "gameplay": {
+      "title": "Gameplay System",
+      "description": "Tools, AI, and\nplayer interaction.",
+      "thumbnailMedia": null,
+      "previewMedia": null
+    },
+    "shader": {
+      "title": "Shader Experiment",
+      "description": "Real-time rendering\nand visual research.",
+      "thumbnailMedia": null,
+      "previewMedia": null
+    },
+    "featured": {
+      "title": "Featured Work",
+      "description": "A closer look at\na selected project.",
+      "thumbnailMedia": null,
+      "previewMedia": null
+    }
+  },
+  "skills": {
+    "unity": {
+      "title": "Unity",
+      "description": "Real-time systems\nand tooling.",
+      "thumbnailMedia": null,
+      "previewMedia": null
+    },
+    "unreal": {
+      "title": "Unreal",
+      "description": "High-fidelity real-time\nexperiences.",
+      "thumbnailMedia": null,
+      "previewMedia": null
+    },
+    "glsl": {
+      "title": "GLSL",
+      "description": "Rendering, shaders\nand visual effects.",
+      "thumbnailMedia": null,
+      "previewMedia": null
+    },
+    "csharp": {
+      "title": "C#",
+      "description": "Gameplay systems\nand tools.",
+      "thumbnailMedia": null,
+      "previewMedia": null
+    },
+    "cpp": {
+      "title": "C++",
+      "description": "Engine-level systems\nand performance.",
+      "thumbnailMedia": null,
+      "previewMedia": null
+    },
+    "hlsl": {
+      "title": "HLSL",
+      "description": "Real-time graphics\non modern pipelines.",
+      "thumbnailMedia": null,
+      "previewMedia": null
+    },
+    "git": {
+      "title": "Git",
+      "description": "Version control\nand collaboration.",
+      "thumbnailMedia": null,
+      "previewMedia": null
+    },
+    "webgl": {
+      "title": "WebGL",
+      "description": "Browser-based\nexperiments.",
+      "thumbnailMedia": null,
+      "previewMedia": null
+    },
+    "tools": {
+      "title": "Tools",
+      "description": "DCC, debugging\nand productivity.",
+      "thumbnailMedia": null,
+      "previewMedia": null
+    },
+    "workflow": {
+      "title": "Workflow",
+      "description": "Iteration, organization\nand project structure.",
+      "thumbnailMedia": null,
+      "previewMedia": null
+    },
+    "experiments": {
+      "title": "Experiments",
+      "description": "Ongoing research\nand side projects.",
+      "thumbnailMedia": null,
+      "previewMedia": null
+    }
+  }
+}

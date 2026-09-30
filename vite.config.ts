@@ -1,10 +1,11 @@
+import { localEditor } from "./scripts/local-editor.ts";
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 
 export default defineConfig({
-  plugins: [react(), {
+  plugins: [react(), localEditor(), {
     name: "local-design-reference",
     apply: "serve",
     configureServer(server) {

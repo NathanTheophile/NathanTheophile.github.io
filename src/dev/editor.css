@@ -1,0 +1,42 @@
+.content-editor { color: #dfe8ec; background: #151c22; font: 14px/1.5 Arial, sans-serif; height: 100dvh; display: flex; flex-direction: column; }
+.editor-toolbar { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid #35424d; flex-wrap: wrap; flex-shrink: 0; }
+.editor-toolbar > strong { font-size: 16px; }
+.content-editor label { display: flex; flex-direction: column; gap: 6px; }
+.editor-toolbar label { flex-direction: row; align-items: center; }
+.content-editor input, .content-editor select, .content-editor textarea { font: inherit; color: #edf4f8; border: 1px solid #4b5b69; background: #202b35; border-radius: 4px; padding: 9px 10px; width: 100%; min-width: 0; }
+.content-editor input:focus, .content-editor textarea:focus, .content-editor select:focus { outline: 2px solid #85c7e2; outline-offset: 1px; }
+.content-editor textarea { resize: vertical; min-height: 88px; }
+.content-editor button { font: inherit; color: #e9f0f5; background: #283541; border: 1px solid #526676; border-radius: 4px; padding: 8px 12px; cursor: pointer; }
+.content-editor button:disabled { opacity: .4; cursor: default; }
+.content-editor .editor-save { color: #15242e; background: #a4d4e8; border-color: #a4d4e8; font-weight: bold; }
+.content-editor a { color: #a4d4e8; white-space: nowrap; }
+.editor-save-status { font-size: 12px; margin-left: auto; }
+.editor-workspace { display: flex; flex: 1; min-height: 0; }
+.editor-sidebar { width: 330px; flex-shrink: 0; padding: 20px; overflow-y: auto; border-right: 1px solid #35424d; }
+.editor-sidebar p { color: #afbfcb; font-size: 12px; margin: 0 0 18px; }
+.editor-sidebar form { display: flex; flex-direction: column; gap: 18px; margin: 22px 0; }
+.editor-sidebar h1 { font-size: 17px; font-weight: 600; margin: 0; overflow-wrap: anywhere; }
+.editor-sidebar fieldset { display: flex; flex-direction: column; gap: 12px; border: 1px solid #425261; padding: 12px; border-radius: 4px; min-width: 0; }
+.editor-sidebar legend { padding: 0 5px; font-size: 12px; }
+.editor-sidebar code { color: #d8e9f3; overflow-wrap: anywhere; }
+.editor-media-preview { width: 100%; max-height: 150px; object-fit: contain; background: #0f151a; }
+.editor-upload { font-size: 12px; }
+.editor-upload input { padding: 8px; font-size: 11px; }
+.editor-site-preview { display: block; flex: 1; width: 0; min-width: 0; border: 0; background: #edf2f7; }
+.editor-error { padding: 10px 18px; background: #542b2e; color: #ffe3e3; flex-shrink: 0; }
+.editor-preview [data-edit-text]:hover { outline: 1px dashed #4086a1; outline-offset: 3px; cursor: text; }
+.editor-preview [data-edit-media]:hover { outline: 2px dashed #4086a1; outline-offset: -3px; cursor: pointer; }
+.editor-preview .inline-editing { outline: 2px solid #4086a1 !important; outline-offset: 3px; background: #e7f6ffe6; color: #152c3b; min-width: 15px; white-space: pre-wrap; cursor: text; }
+.editor-preview .node-edit { font: 9px/1.2 Arial, sans-serif; padding: 3px 5px; border: 1px solid currentColor; border-radius: 2px; background: transparent; color: inherit; margin-left: 6px; vertical-align: middle; cursor: pointer; }
+.editor-preview .node-action { display: inline-grid; vertical-align: middle; }
+@media(max-width: 850px) {
+  .editor-sidebar { width: 260px; padding: 12px; }
+  .editor-toolbar { gap: 8px; padding: 8px; }
+  .editor-save-status { order: 2; width: 100%; margin: 0; }
+}
+@media(max-width: 580px) {
+  .editor-workspace { flex-direction: column; }
+  .editor-sidebar { width: 100%; flex: 0 0 43%; border-right: 0; border-bottom: 1px solid #35424d; }
+  .editor-site-preview { width: 100%; }
+  .editor-toolbar > a { display: none; }
+}

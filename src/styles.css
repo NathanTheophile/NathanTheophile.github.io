@@ -10,8 +10,9 @@ body,
   overflow: hidden;
 }
 body {
+  --project-ink: #222a33;
   font-family: Arial, Helvetica, sans-serif;
-  color: #222a33;
+  color: var(--project-ink);
   -webkit-font-smoothing: antialiased;
 }
 button,
@@ -125,19 +126,23 @@ a:focus-visible {
   padding: 0;
   border: 0;
   background: transparent;
-  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   font-size: 9px;
   letter-spacing: 1.4px;
 }
 .header nav button[aria-current="page"]::after {
   content: "";
-  position: absolute;
   width: 6px;
   height: 6px;
   border-radius: 50%;
   background: currentColor;
-  bottom: -17px;
-  left: calc(50% - 3px);
+  flex-shrink: 0;
+  margin-bottom: -6px;
+  transform: translateY(21px);
+  pointer-events: none;
 }
 .section-label {
   display: flex;
@@ -147,7 +152,7 @@ a:focus-visible {
   letter-spacing: 1.7px;
   line-height: 16px;
 }
-.section-label > span {
+.section-label > span:first-child {
   color: #73808f;
   letter-spacing: 1px;
 }
@@ -195,6 +200,10 @@ a:focus-visible {
 .node-rings {
   color: #8796a7;
 }
+.tree-art,
+.project-node .node-rings [data-connection-ring] {
+  color: var(--project-ink);
+}
 .node-image {
   display: grid;
   place-items: center;
@@ -212,6 +221,14 @@ a:focus-visible {
   border-radius: 50%;
   transition: transform 0.25s;
 }
+.node-image > img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+.brand-mark { display: flex; flex-shrink: 0; }
+.brand-mark img { object-fit: contain; }
 .node-image:hover > svg {
   transform: scale(1.04);
 }
@@ -348,7 +365,7 @@ a:focus-visible {
   font-size: 14px;
   line-height: 1.35;
 }
-.skills .section-label > span {
+.skills .section-label > span:first-child {
   color: inherit;
 }
 .skills .outline-cta {
@@ -516,6 +533,63 @@ a:focus-visible {
   display: flex;
   flex-direction: column;
 }
+.contact-content {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-content: center;
+  align-items: center;
+  gap: clamp(24px, 5vw, 72px);
+}
+.contact-intro h3 {
+  font-size: clamp(38px, 5vw, 64px);
+  letter-spacing: -1.5px;
+  margin: 0 0 20px;
+}
+.contact-intro p {
+  max-width: 360px;
+  color: #657181;
+  font-size: 15px;
+  line-height: 1.6;
+  margin: 0;
+}
+.contact-identity {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 36px;
+  font-size: 12px;
+}
+.contact-identity span {
+  color: #73808f;
+}
+.contact-email {
+  display: grid;
+  grid-template-columns: 1fr 28px;
+  align-items: center;
+  gap: 18px;
+  padding: 28px;
+  border: 1px solid #a7b6c4;
+  color: var(--project-ink);
+  text-decoration: none;
+  background: #f0f4f899;
+}
+.contact-email .section-label {
+  grid-column: 1 / -1;
+  color: #73808f;
+}
+.contact-email strong {
+  font-size: clamp(18px, 2vw, 28px);
+  overflow-wrap: anywhere;
+}
+.contact-email svg {
+  width: 28px;
+  height: 28px;
+}
+.contact-email:hover {
+  background: #f7f9fb;
+  border-color: #536b7d;
+}
 .catalog-header {
   display: flex;
   align-items: flex-end;
@@ -644,19 +718,21 @@ a:focus-visible {
   .header nav {
     width: 100%;
     justify-content: space-between;
-    gap: 18px;
+    gap: 8px;
     margin-top: 6px;
     align-self: auto;
   }
   .header nav button {
-    font-size: 9px;
+    font-size: 8px;
+    letter-spacing: .6px;
     min-height: 44px;
     min-width: 44px;
   }
   .header nav button[aria-current="page"]::after {
-    bottom: -7px;
     width: 4px;
     height: 4px;
+    margin-bottom: -4px;
+    transform: translateY(20px);
   }
   .section-label {
     font-size: 9px;
@@ -739,6 +815,11 @@ a:focus-visible {
   .catalog-stage { padding: 24px 18px; }
   .catalog-header { gap: 12px; margin-bottom: 18px; padding-bottom: 18px; }
   .catalog-header h2 { font-size: 25px; }
+  .contact-content { grid-template-columns: 1fr; gap: 28px; }
+  .contact-intro h3 { margin-bottom: 16px; }
+  .contact-intro p { font-size: 14px; }
+  .contact-identity { margin-top: 24px; }
+  .contact-email { padding: 22px; }
   .catalog-count { font-size: 8px; letter-spacing: 0.7px; white-space: normal; text-align: right; }
   .catalog-grid,
   .catalog.skills .catalog-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
